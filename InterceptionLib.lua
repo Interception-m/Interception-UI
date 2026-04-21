@@ -3101,4 +3101,5 @@ function Library:CreateWindow(opts)
     return Window
 end
 
+_G.InterceptionLib = Library
 return Library
