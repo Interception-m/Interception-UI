@@ -34,29 +34,30 @@ Each tab supports up to **4 panels** — 2 top (left/right) and 2 bottom sub-pan
 ```lua
 local Tab = Window:AddTab("Combat")
 
--- Top panels (full height by default)
+-- Top panels (sections 1 & 2, always full height)
 local Left  = Tab:AddSection("Targeting")
-local Right = Tab:AddSection("Settings", { Height = 200 })
+local Right = Tab:AddSection("Settings")
 
--- Bottom panels (fill the space freed by Height)
-local BotLeft  = Tab:AddSection("Extra", { Height = 200 })
-local BotRight = Tab:AddSection("Advanced", { Height = 200 })
+-- Bottom panels (sections 3 & 4, Height = how tall the bottom panel is)
+local BotLeft  = Tab:AddSection("Extra", { Height = 150 })
+local BotRight = Tab:AddSection("Advanced", { Height = 150 })
 ```
 
 ### Layout
 
-| Parameter | Effect |
-|-----------|--------|
-| No `Height` | Full 540px panel, no sub-panel below |
-| `Height = N` | Top panel shrinks to `540 - N - 10`px, bottom panel is `N`px tall |
+Sections are assigned in order: **1 = top-left, 2 = top-right, 3 = bottom-left, 4 = bottom-right**.
 
-Sections are assigned in order: 1 = top-left, 2 = top-right, 3 = bottom-left, 4 = bottom-right. A 10px gap separates stacked panels.
+- Sections 1 & 2 are the **top panels** — they start at full height (540px) but shrink automatically if a bottom panel is added below them
+- Sections 3 & 4 are the **bottom panels** — the `Height` parameter defines how tall they are
+- When `Height = N`, the top panel above it shrinks to `540 - N - 10`px (10px gap between stacked panels)
+- If you only use 2 sections (no Height, no bottom panels), both top panels stay at full 540px
+- You can have bottom panels on one side only (e.g. 3 sections total)
 
 ---
 
 ## Widgets
 
-All widgets auto-stack vertically in their section. Every widget returns a controller with `:Get()` and `:Set()` methods.
+All widgets auto-stack vertically in their section. Every widget returns a controller with `:Get()` and `:Set()` methods. **Every widget supports a `Callback` function** that fires whenever the value changes.
 
 ### Toggle
 
@@ -140,6 +141,7 @@ Section:AddColorpicker({
     Name = "Accent",
     Default = Color3.fromRGB(130, 80, 255),
     Toggle = false,
+    Callback = function(color) end,
 })
 
 myColor:GetColor()  -- returns Color3
@@ -165,6 +167,7 @@ Section:AddSingle({
     Options = {"Distance", "Health", "Threat"},
     Default = "Distance",
     Drop = false,
+    Callback = function(value) end,
 })
 
 myDrop:Get()          -- returns string
@@ -189,6 +192,7 @@ Section:AddMulti({
     Options = {"Shadows", "Sky", "Arms", "Effects"},
     Default = {},
     Drop = false,
+    Callback = function(selected) end,
 })
 
 myMulti:Get()  -- returns table of selected strings
