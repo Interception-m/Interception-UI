@@ -7,7 +7,8 @@ A Drawing API-based UI library for Matcha. Renders a fully interactive menu with
 ## Getting Started
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Interception-m/Interception-UI/refs/heads/main/InterceptionLib.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Interception-m/Interception-UI/refs/heads/main/InterceptionLib.lua"))()
+local Library = _G.InterceptionLib
 
 local Window = Library:CreateWindow({
     Game = "Blade Ball",  -- config subfolder name
