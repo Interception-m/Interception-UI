@@ -1,6 +1,6 @@
 # Interception UI Library
 
-A Drawing API-based UI library for Roblox executors. Renders a fully interactive menu with tabs, panels, widgets, configs, and floating info panels — all using the Drawing API.
+A Drawing API-based UI library for Matcha. Renders a fully interactive menu with tabs, panels, widgets, configs, and floating info panels — all using the Drawing API.
 
 ---
 
