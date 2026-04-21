@@ -3,18 +3,8 @@ local Library = {}
 local Mouse = game.Players.LocalPlayer:GetMouse()
 
 -- Helpers
-local charW = 5.5 -- character width for current font (Monospace/JetBrains)
-local fontCharWidths = {
-    [Drawing.Fonts.UI] = 6.5,
-    [Drawing.Fonts.System] = 6.2,
-    [Drawing.Fonts.SystemBold] = 6.5,
-    [Drawing.Fonts.Minecraft] = 6.5,
-    [Drawing.Fonts.Monospace] = 5.5,
-    [Drawing.Fonts.Pixel] = 6,
-    [Drawing.Fonts.Fortnite] = 7,
-}
 local function rightAlignX(text, panelPos, panelWidth)
-    return panelPos.X + panelWidth - (#text * charW) - 10
+    return panelPos.X + panelWidth - (#text * 6.5) - 10
 end
 
 local function hsvToRgb(h, s, v)
@@ -131,21 +121,11 @@ local modeLabels = {always = "Always On", toggle = "Toggle", hold = "Hold"}
 
 function Library:CreateWindow(opts)
     opts = opts or {}
-    local title = "I n t e r c e p t i o n"
+    local title = opts.Title or "I n t e r c e p t i o n"
     local menuKey = opts.Key or 35
-    local configPath = "INTERCEPTION"
-    local gameName = opts.Game or ""
 
     local viewportSize = workspace.CurrentCamera.ViewportSize
     local bgPos = Vector2.new(math.floor((viewportSize.X - 550) / 2), math.floor((viewportSize.Y - 600) / 2))
-
-    -- Text tracking for SetFont
-    local allTextDrawings = {}
-    local function newText(tag)
-        local t = Drawing.new("Text")
-        allTextDrawings[#allTextDrawings+1] = {drawing = t, tag = tag or "widget"}
-        return t
-    end
 
     -- Glow
     local glowLayers = {}
@@ -180,7 +160,7 @@ function Library:CreateWindow(opts)
     Title1.Position = BG.Position + Vector2.new(2, 2)
     Title1.Size = Vector2.new(546, 30); Title1.Filled = true; Title1.Corner = 6
 
-    local TitleText = newText("title")
+    local TitleText = Drawing.new("Text")
     TitleText.Visible = true; TitleText.Transparency = 1; TitleText.ZIndex = 30
     TitleText.Color = Color3.fromHex("#FFFFFF")
     TitleText.Position = Title1.Position + Vector2.new(8, 6)
@@ -198,23 +178,23 @@ function Library:CreateWindow(opts)
     RCMenu_Border.Color = Color3.fromHex("#282828"); RCMenu_Border.Filled = false; RCMenu_Border.Thickness = 1
     RCMenu_Border.Position = Vector2.new(0,0); RCMenu_Border.Size = Vector2.new(70, 60); RCMenu_Border.Corner = 6
 
-    local RCAlways = newText()
+    local RCAlways = Drawing.new("Text")
     RCAlways.Visible = false; RCAlways.Transparency = 1; RCAlways.ZIndex = 610
     RCAlways.Color = Color3.fromHex("#FFFFFF"); RCAlways.Position = Vector2.new(0,0)
     RCAlways.Text = "Always On"; RCAlways.Size = 12; RCAlways.Center = false
-    RCAlways.Outline = true; RCAlways.Font = Drawing.Fonts.Monospace
+    RCAlways.Outline = true; RCAlways.Font = Drawing.Fonts.UI
 
-    local RCToggle = newText()
+    local RCToggle = Drawing.new("Text")
     RCToggle.Visible = false; RCToggle.Transparency = 1; RCToggle.ZIndex = 610
     RCToggle.Color = Color3.fromHex("#505050"); RCToggle.Position = Vector2.new(0,0)
     RCToggle.Text = "Toggle"; RCToggle.Size = 12; RCToggle.Center = false
-    RCToggle.Outline = true; RCToggle.Font = Drawing.Fonts.Monospace
+    RCToggle.Outline = true; RCToggle.Font = Drawing.Fonts.UI
 
-    local RCHold = newText()
+    local RCHold = Drawing.new("Text")
     RCHold.Visible = false; RCHold.Transparency = 1; RCHold.ZIndex = 610
     RCHold.Color = Color3.fromHex("#505050"); RCHold.Position = Vector2.new(0,0)
     RCHold.Text = "Hold"; RCHold.Size = 12; RCHold.Center = false
-    RCHold.Outline = true; RCHold.Font = Drawing.Fonts.Monospace
+    RCHold.Outline = true; RCHold.Font = Drawing.Fonts.UI
 
     -- Window state
     local menuOpen = true
@@ -231,7 +211,7 @@ function Library:CreateWindow(opts)
     -- All tabs data
     local tabs = {}
     local tabLabels = {}
-    local tabXOffsets = {} -- computed dynamically in Start()
+    local tabXOffsets = {308, 368, 438, 488}
     local allKeybinds = {} -- {bindText, panelPos, panelWidth, yPos, keyVar, modeVar, listening, toggleRef, nameText, isStandalone, callback}
     local allColorpickers = {} -- each CP data
     local allSliders = {}
@@ -239,10 +219,7 @@ function Library:CreateWindow(opts)
     local allDropdowns = {}
     local allSelects = {}
     local allMultiDropdowns = {}
-    local allMultiSelects = {}
     local allToggles = {}
-    local configWidgets = {} -- {name, get, set} for config save/load
-    local allInfoPanels = {}
 
     -- Hotkey list
     local hotkeyListOn = false
@@ -256,12 +233,12 @@ function Library:CreateWindow(opts)
     local HotkeyBG = Drawing.new("Square")
     HotkeyBG.Visible = false; HotkeyBG.Transparency = 1; HotkeyBG.ZIndex = 700
     HotkeyBG.Color = Color3.fromHex("#050505"); HotkeyBG.Position = hkPanelPos
-    HotkeyBG.Size = Vector2.new(220, 32); HotkeyBG.Filled = true; HotkeyBG.Corner = 6
+    HotkeyBG.Size = Vector2.new(220, 38); HotkeyBG.Filled = true; HotkeyBG.Corner = 6
 
     local HotkeyBG_Border = Drawing.new("Square")
     HotkeyBG_Border.Visible = false; HotkeyBG_Border.Transparency = 1; HotkeyBG_Border.ZIndex = 701
     HotkeyBG_Border.Color = Color3.fromHex("#282828"); HotkeyBG_Border.Filled = false; HotkeyBG_Border.Thickness = 1
-    HotkeyBG_Border.Position = hkPanelPos; HotkeyBG_Border.Size = Vector2.new(220, 32); HotkeyBG_Border.Corner = 6
+    HotkeyBG_Border.Position = hkPanelPos; HotkeyBG_Border.Size = Vector2.new(220, 38); HotkeyBG_Border.Corner = 6
 
     local HotkeyTitleBG = Drawing.new("Square")
     HotkeyTitleBG.Visible = false; HotkeyTitleBG.Transparency = 1; HotkeyTitleBG.ZIndex = 710
@@ -269,12 +246,12 @@ function Library:CreateWindow(opts)
     HotkeyTitleBG.Position = hkPanelPos + Vector2.new(1, 1)
     HotkeyTitleBG.Size = Vector2.new(218, 30); HotkeyTitleBG.Filled = true; HotkeyTitleBG.Corner = 6
 
-    local HotkeyTitle = newText()
+    local HotkeyTitle = Drawing.new("Text")
     HotkeyTitle.Visible = false; HotkeyTitle.Transparency = 1; HotkeyTitle.ZIndex = 720
     HotkeyTitle.Color = Color3.fromHex("#FFFFFF")
-    HotkeyTitle.Position = hkPanelPos + Vector2.new(40, 8)
+    HotkeyTitle.Position = hkPanelPos + Vector2.new(40, 10)
     HotkeyTitle.Text = "Hotkeys"; HotkeyTitle.Size = 14; HotkeyTitle.Center = false
-    HotkeyTitle.Outline = true; HotkeyTitle.Font = Drawing.Fonts.Monospace
+    HotkeyTitle.Outline = true; HotkeyTitle.Font = Drawing.Fonts.UI
 
     local hkEntries = {} -- {nameDrawing, modeDrawing, getVisible, getActive, getMode, getName}
 
@@ -293,12 +270,12 @@ function Library:CreateWindow(opts)
                 local modeText = "[" .. (modeLabels[entry.getMode()] or "Always On") .. "]"
                 entry.modeDrawing.Text = modeText
                 entry.nameDrawing.Position = HotkeyBG.Position + Vector2.new(10, yOff)
-                entry.modeDrawing.Position = Vector2.new(HotkeyBG.Position.X + 214 - #modeText * 6.7, HotkeyBG.Position.Y + yOff)
+                entry.modeDrawing.Position = Vector2.new(HotkeyBG.Position.X + 211 - #modeText * 7.5, HotkeyBG.Position.Y + yOff)
                 yOff = yOff + 20
                 entryCount = entryCount + 1
             end
         end
-        local panelH = entryCount > 0 and (30 + entryCount * 20 + 8) or 32
+        local panelH = 30 + entryCount * 20 + 8
         HotkeyBG.Size = Vector2.new(220, panelH)
         HotkeyBG_Border.Size = Vector2.new(220, panelH)
     end
@@ -329,7 +306,7 @@ function Library:CreateWindow(opts)
         HotkeyBG_Border.Position = HotkeyBG.Position
         HotkeyTitleBG.Position = HotkeyBG.Position + Vector2.new(1, 1)
         if Icon then Icon.Position = HotkeyBG.Position + Vector2.new(10, 7) end
-        HotkeyTitle.Position = HotkeyBG.Position + Vector2.new(40, 8)
+        HotkeyTitle.Position = HotkeyBG.Position + Vector2.new(40, 10)
         updateHotkeyList()
     end
 
@@ -388,9 +365,6 @@ function Library:CreateWindow(opts)
     for _, g in ipairs(glowLayers) do addMenuEl(g) end
 
     -- Tab switching
-    -- Config state (set by AddConfigTab, used by switchTab/mainLoop)
-    local cfgState = nil
-
     local function switchTab(idx)
         activeTab = idx
         for j, tl in ipairs(tabLabels) do
@@ -410,11 +384,6 @@ function Library:CreateWindow(opts)
         end
         if not (tabs[idx]) then return end
         closeAllPopups()
-        -- Refresh config list to fix entry visibility after tab switch
-        if cfgState and idx == cfgState.tabIndex then
-            cfgState.refreshList()
-            cfgState.updateInputDisplay()
-        end
     end
 
     -- Window object
@@ -426,214 +395,6 @@ function Library:CreateWindow(opts)
         toggleHotkeyList(show)
     end
     Window._toggleHotkeyList = Window.ToggleHotkeyList
-
-    function Window:CreateInfoPanel(opts)
-        opts = opts or {}
-        local ipTitle = opts.Title or "Info"
-        local charW = 5.5    -- Monospace size 12
-        local titleCharW = 6.7 -- Monospace size 14
-        local lineH = 18
-        local minW = 120
-        local MAX_LINES = 20
-
-        -- Calculate initial width from title
-        local function calcWidth(lines)
-            local maxW = #ipTitle * titleCharW + 50 -- title + icon space + padding
-            for _, ln in ipairs(lines) do
-                local lineW = (#ln.key + 2 + #ln.value) * charW -- "Key: Value"
-                if lineW > maxW then maxW = lineW end
-            end
-            local w = math.floor(maxW + 20)
-            if w < minW then w = minW end
-            return w
-        end
-
-        local ipLines = {} -- {key, value, labelDraw, valueDraw}
-        local ipVisible = false
-        local ipW = calcWidth(ipLines)
-
-        -- Position to the left of main window
-        local ipPos = Vector2.new(BG.Position.X - ipW - 10, BG.Position.Y + 40)
-
-        -- Background
-        local ipBG = Drawing.new("Square")
-        ipBG.Visible = false; ipBG.Transparency = 1; ipBG.ZIndex = 700
-        ipBG.Color = Color3.fromHex("#050505"); ipBG.Position = ipPos
-        ipBG.Size = Vector2.new(ipW, 32); ipBG.Filled = true; ipBG.Corner = 6
-
-        local ipBG_Border = Drawing.new("Square")
-        ipBG_Border.Visible = false; ipBG_Border.Transparency = 1; ipBG_Border.ZIndex = 701
-        ipBG_Border.Color = Color3.fromHex("#282828"); ipBG_Border.Filled = false; ipBG_Border.Thickness = 1
-        ipBG_Border.Position = ipPos; ipBG_Border.Size = Vector2.new(ipW, 32); ipBG_Border.Corner = 6
-
-        -- Title bar
-        local ipTitleBG = Drawing.new("Square")
-        ipTitleBG.Visible = false; ipTitleBG.Transparency = 1; ipTitleBG.ZIndex = 710
-        ipTitleBG.Color = Color3.fromHex("#0a0a0a")
-        ipTitleBG.Position = ipPos + Vector2.new(1, 1)
-        ipTitleBG.Size = Vector2.new(ipW - 2, 30); ipTitleBG.Filled = true; ipTitleBG.Corner = 6
-
-        local ipTitleText = newText()
-        ipTitleText.Visible = false; ipTitleText.Transparency = 1; ipTitleText.ZIndex = 720
-        ipTitleText.Color = Color3.fromHex("#FFFFFF")
-        ipTitleText.Position = ipPos + Vector2.new(10, 8)
-        ipTitleText.Text = ipTitle; ipTitleText.Size = 14; ipTitleText.Center = false
-        ipTitleText.Outline = true; ipTitleText.Font = Drawing.Fonts.Monospace
-
-        -- Line drawing pool
-        local linePool = {}
-        for i = 1, MAX_LINES do
-            local lbl = newText()
-            lbl.Visible = false; lbl.Transparency = 1; lbl.ZIndex = 720
-            lbl.Color = Color3.fromHex("#808080"); lbl.Position = Vector2.new(0, 0)
-            lbl.Text = ""; lbl.Size = 12; lbl.Center = false
-            lbl.Outline = true; lbl.Font = Drawing.Fonts.Monospace
-
-            local val = newText()
-            val.Visible = false; val.Transparency = 1; val.ZIndex = 720
-            val.Color = Color3.fromHex("#FFFFFF"); val.Position = Vector2.new(0, 0)
-            val.Text = ""; val.Size = 12; val.Center = false
-            val.Outline = true; val.Font = Drawing.Fonts.Monospace
-
-            linePool[i] = {labelDraw = lbl, valueDraw = val}
-        end
-
-        local ipData = {
-            bg = ipBG,
-            border = ipBG_Border,
-            titleBG = ipTitleBG,
-            titleText = ipTitleText,
-            lines = ipLines,
-            linePool = linePool,
-            visible = false,
-            dragging = false,
-            dragStart = nil,
-            startPos = nil,
-        }
-
-        -- Update all positions relative to ipBG.Position
-        local function updatePositions()
-            ipBG_Border.Position = ipBG.Position
-            ipTitleBG.Position = ipBG.Position + Vector2.new(1, 1)
-            ipTitleText.Position = ipBG.Position + Vector2.new(10, 8)
-            local yOff = 37
-            for i, ln in ipairs(ipLines) do
-                local pool = linePool[i]
-                if pool then
-                    pool.labelDraw.Position = ipBG.Position + Vector2.new(10, yOff)
-                    local labelW = (#ln.key + 2) * charW -- "Key: "
-                    pool.valueDraw.Position = ipBG.Position + Vector2.new(10 + math.floor(labelW), yOff)
-                    yOff = yOff + lineH
-                end
-            end
-        end
-        ipData.updatePositions = updatePositions
-
-        -- Resize panel and reflow
-        local function refresh()
-            ipW = calcWidth(ipLines)
-            local lineCount = #ipLines
-            local panelH = lineCount > 0 and (30 + lineCount * lineH + 8) or 32
-            ipBG.Size = Vector2.new(ipW, panelH)
-            ipBG_Border.Size = Vector2.new(ipW, panelH)
-            ipTitleBG.Size = Vector2.new(ipW - 2, 30)
-
-            -- Update pool visibility and text
-            for i = 1, MAX_LINES do
-                local pool = linePool[i]
-                if i <= lineCount then
-                    local ln = ipLines[i]
-                    pool.labelDraw.Text = ln.key .. ": "
-                    pool.valueDraw.Text = ln.value
-                    pool.labelDraw.Visible = ipVisible
-                    pool.valueDraw.Visible = ipVisible
-                else
-                    pool.labelDraw.Visible = false
-                    pool.valueDraw.Visible = false
-                end
-            end
-            updatePositions()
-        end
-
-        -- Set all drawing visibility
-        local function setDrawingsVisible(show)
-            ipBG.Visible = show
-            ipBG_Border.Visible = show
-            ipTitleBG.Visible = show
-            ipTitleText.Visible = show
-            for i = 1, MAX_LINES do
-                local pool = linePool[i]
-                if i <= #ipLines then
-                    pool.labelDraw.Visible = show
-                    pool.valueDraw.Visible = show
-                else
-                    pool.labelDraw.Visible = false
-                    pool.valueDraw.Visible = false
-                end
-            end
-        end
-        ipData.setDrawingsVisible = setDrawingsVisible
-
-        -- Public API
-        local ret = {}
-
-        function ret:SetTitle(text)
-            ipTitle = text or "Info"
-            ipTitleText.Text = ipTitle
-            refresh()
-        end
-
-        function ret:SetLine(key, value)
-            -- Find existing line with this key
-            for _, ln in ipairs(ipLines) do
-                if ln.key == key then
-                    ln.value = value or ""
-                    refresh()
-                    return
-                end
-            end
-            -- Add new line
-            if #ipLines < MAX_LINES then
-                ipLines[#ipLines + 1] = {key = key, value = value or ""}
-                refresh()
-            end
-        end
-
-        function ret:RemoveLine(key)
-            for i, ln in ipairs(ipLines) do
-                if ln.key == key then
-                    table.remove(ipLines, i)
-                    refresh()
-                    return
-                end
-            end
-        end
-
-        function ret:SetVisible(show)
-            ipVisible = show
-            ipData.visible = show
-            setDrawingsVisible(show and menuOpen)
-            if show then refresh() end
-        end
-
-        function ret:Destroy()
-            pcall(function() ipBG:Remove() end)
-            pcall(function() ipBG_Border:Remove() end)
-            pcall(function() ipTitleBG:Remove() end)
-            pcall(function() ipTitleText:Remove() end)
-            for i = 1, MAX_LINES do
-                pcall(function() linePool[i].labelDraw:Remove() end)
-                pcall(function() linePool[i].valueDraw:Remove() end)
-            end
-            -- Remove from tracking
-            for i, ip in ipairs(allInfoPanels) do
-                if ip == ipData then table.remove(allInfoPanels, i); break end
-            end
-        end
-
-        allInfoPanels[#allInfoPanels + 1] = ipData
-        return ret
-    end
 
     function Window:Destroy()
         for _, tabData in ipairs(tabs) do
@@ -648,70 +409,22 @@ function Library:CreateWindow(opts)
         if Icon then pcall(function() Icon.Remove() end) end
         pcall(function() RCMenu:Remove() end); pcall(function() RCMenu_Border:Remove() end)
         pcall(function() RCAlways:Remove() end); pcall(function() RCToggle:Remove() end); pcall(function() RCHold:Remove() end)
-        for _, ip in ipairs(allInfoPanels) do
-            pcall(function() ip.bg:Remove() end); pcall(function() ip.border:Remove() end)
-            pcall(function() ip.titleBG:Remove() end); pcall(function() ip.titleText:Remove() end)
-            for _, pool in ipairs(ip.linePool) do
-                pcall(function() pool.labelDraw:Remove() end); pcall(function() pool.valueDraw:Remove() end)
-            end
-        end
     end
 
     function Window:GetMenuKeyName()
         return KeyNames[menuKey] or "End"
     end
 
-    function Window:SetFont(font, exclude)
-        local skip = {}
-        if exclude then
-            for _, tag in ipairs(exclude) do skip[tag] = true end
-        end
-        for _, entry in ipairs(allTextDrawings) do
-            if not skip[entry.tag] then
-                entry.drawing.Font = font
-            end
-        end
-        -- Update charW for right-alignment and hit detection
-        charW = fontCharWidths[font] or 6.5
-        -- Refresh tab label positions
-        local gap = 15
-        local rightEdge = 538
-        local totalW = 0
-        for i = #tabLabels, 1, -1 do
-            totalW = totalW + #tabLabels[i].Text * (charW + 0.5)
-            if i < #tabLabels then totalW = totalW + gap end
-        end
-        local x = rightEdge - totalW
-        for i, tl in ipairs(tabLabels) do
-            tabXOffsets[i] = x
-            tl.Position = Title1.Position + Vector2.new(x, 8)
-            x = x + #tl.Text * (charW + 0.5) + gap
-        end
-        -- Refresh keybind text positions
-        for _, kb in ipairs(allKeybinds) do
-            if not kb.listening then
-                kb.bindText.Position = Vector2.new(rightAlignX(kb.bindText.Text, kb.panel.Position, kb.panel.Size.X), kb.panel.Position.Y + kb.yPos)
-            end
-        end
-        -- Refresh slider value positions
-        for _, sd in ipairs(allSliders) do
-            sd.valueText.Position = Vector2.new(rightAlignX(sd.valueText.Text, sd.panel.Position, sd.panel.Size.X), sd.valueText.Position.Y)
-        end
-        -- Refresh range slider value positions
-        for _, rs in ipairs(allRangeSliders) do
-            rs.rightText.Position = Vector2.new(rightAlignX(rs.rightText.Text, rs.panel.Position, rs.panel.Size.X), rs.rightText.Position.Y)
-            rs.leftText.Position = Vector2.new(rs.rightText.Position.X - #rs.leftText.Text * charW - 5, rs.leftText.Position.Y)
-        end
-    end
-
     function Window:AddTab(name)
         local tabIndex = #tabs + 1
-        local tabLabel = newText()
+        local xOff = tabXOffsets[tabIndex] or (tabXOffsets[#tabXOffsets] + (tabIndex - #tabXOffsets) * 60)
+
+        local tabLabel = Drawing.new("Text")
         tabLabel.Visible = true; tabLabel.Transparency = 1; tabLabel.ZIndex = 40 + tabIndex * 10
         tabLabel.Color = (tabIndex == 1) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-        tabLabel.Position = Title1.Position + Vector2.new(300 + (tabIndex - 1) * 60, 8) -- placeholder, Start() recalculates
+        tabLabel.Position = Title1.Position + Vector2.new(xOff, 8)
         tabLabel.Text = name; tabLabel.Size = 12; tabLabel.Center = false
-        tabLabel.Outline = true; tabLabel.Font = Drawing.Fonts.Monospace
+        tabLabel.Outline = true; tabLabel.Font = Drawing.Fonts.UI
         tabLabels[tabIndex] = tabLabel
         addMenuEl(tabLabel)
 
@@ -739,168 +452,52 @@ function Library:CreateWindow(opts)
         Panel2_Border.Position = Panel2.Position; Panel2_Border.Size = Panel2.Size; Panel2_Border.Corner = 6
 
         -- Panel header texts float ABOVE panels
-        local PanelText1 = newText()
+        local PanelText1 = Drawing.new("Text")
         PanelText1.Visible = (tabIndex == 1); PanelText1.Transparency = 1; PanelText1.ZIndex = 110
         PanelText1.Color = Color3.fromHex("#FFFFFF")
         PanelText1.Position = Panel1.Position + Vector2.new(20, -5)
         PanelText1.Text = "PlaceHolder"; PanelText1.Size = 12; PanelText1.Center = false
-        PanelText1.Outline = true; PanelText1.Font = Drawing.Fonts.Monospace
+        PanelText1.Outline = true; PanelText1.Font = Drawing.Fonts.UI
 
-        local PanelText2 = newText()
+        local PanelText2 = Drawing.new("Text")
         PanelText2.Visible = (tabIndex == 1); PanelText2.Transparency = 1; PanelText2.ZIndex = 120
         PanelText2.Color = Color3.fromHex("#FFFFFF")
         PanelText2.Position = Panel1.Position + Vector2.new(290, -5)
         PanelText2.Text = "PlaceHolder"; PanelText2.Size = 12; PanelText2.Center = false
-        PanelText2.Outline = true; PanelText2.Font = Drawing.Fonts.Monospace
+        PanelText2.Outline = true; PanelText2.Font = Drawing.Fonts.UI
 
         local tabData = {
             elements = {Panel1, Panel1_Border, Panel2, Panel2_Border, PanelText1, PanelText2},
             sliders = {},
             rangeSliders = {},
             panel1 = Panel1, panel2 = Panel2,
-            panel1Border = Panel1_Border, panel2Border = Panel2_Border,
             panelText1 = PanelText1, panelText2 = PanelText2,
             panel1Y = 15, panel2Y = 15,
-            panel3 = nil, panel4 = nil,
-            panel3Border = nil, panel4Border = nil,
-            panelText3 = nil, panelText4 = nil,
-            panel3Y = 15, panel4Y = 15,
-            panel1Height = 540, panel2Height = 540,
-            panel1SubH = nil, panel2SubH = nil,
             sections = {},
         }
         tabs[tabIndex] = tabData
 
         local Tab = {}
 
-        function Tab:AddSection(name, opts)
-            opts = opts or {}
+        function Tab:AddSection(name)
             local sectionIndex = #tabData.sections + 1
-            local panel, panelText, panelYKey
-
-            if sectionIndex == 1 then
-                panel = Panel1; panelText = PanelText1; panelYKey = "panel1Y"
-            elseif sectionIndex == 2 then
-                panel = Panel2; panelText = PanelText2; panelYKey = "panel2Y"
-            elseif sectionIndex == 3 then
-                -- Sub-panel below Panel1
-                local subH = opts.Height or 0
-                if subH > 0 then
-                    tabData.panel1SubH = subH
-                    tabData.panel1Height = 540 - subH - 10
-                    Panel1.Size = Vector2.new(260, tabData.panel1Height)
-                    Panel1_Border.Size = Panel1.Size
-                    local vis3 = (tabIndex == 1)
-                    local p3Pos = Panel1.Position + Vector2.new(0, tabData.panel1Height + 10)
-
-                    local Panel3 = Drawing.new("Square")
-                    Panel3.Visible = vis3; Panel3.Transparency = 1; Panel3.ZIndex = 92
-                    Panel3.Color = Color3.fromHex("#0a0a0a")
-                    Panel3.Position = p3Pos
-                    Panel3.Size = Vector2.new(260, subH); Panel3.Filled = true; Panel3.Corner = 6
-
-                    local Panel3_Border = Drawing.new("Square")
-                    Panel3_Border.Visible = vis3; Panel3_Border.Transparency = 1; Panel3_Border.ZIndex = 93
-                    Panel3_Border.Color = Color3.fromHex("#282828"); Panel3_Border.Filled = false; Panel3_Border.Thickness = 1
-                    Panel3_Border.Position = p3Pos; Panel3_Border.Size = Panel3.Size; Panel3_Border.Corner = 6
-
-                    local PanelText3 = newText()
-                    PanelText3.Visible = vis3; PanelText3.Transparency = 1; PanelText3.ZIndex = 110
-                    PanelText3.Color = Color3.fromHex("#FFFFFF")
-                    PanelText3.Position = p3Pos + Vector2.new(20, -5)
-                    PanelText3.Text = name; PanelText3.Size = 12; PanelText3.Center = false
-                    PanelText3.Outline = true; PanelText3.Font = Drawing.Fonts.Monospace
-
-                    tabData.panel3 = Panel3; tabData.panel3Border = Panel3_Border; tabData.panelText3 = PanelText3
-                    for _, el in ipairs({Panel3, Panel3_Border, PanelText3}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-
-                    panel = Panel3; panelText = PanelText3; panelYKey = "panel3Y"
-                else
-                    -- No Height on left side, fall back to Panel1
-                    panel = Panel1; panelText = PanelText1; panelYKey = "panel1Y"
-                end
-            elseif sectionIndex == 4 then
-                -- Sub-panel below Panel2
-                local subH = opts.Height or 0
-                if subH > 0 then
-                    tabData.panel2SubH = subH
-                    tabData.panel2Height = 540 - subH - 10
-                    Panel2.Size = Vector2.new(260, tabData.panel2Height)
-                    Panel2_Border.Size = Panel2.Size
-
-                    local vis4 = (tabIndex == 1)
-                    local p4Pos = Panel2.Position + Vector2.new(0, tabData.panel2Height + 10)
-
-                    local Panel4 = Drawing.new("Square")
-                    Panel4.Visible = vis4; Panel4.Transparency = 1; Panel4.ZIndex = 102
-                    Panel4.Color = Color3.fromHex("#0a0a0a")
-                    Panel4.Position = p4Pos
-                    Panel4.Size = Vector2.new(260, subH); Panel4.Filled = true; Panel4.Corner = 6
-
-                    local Panel4_Border = Drawing.new("Square")
-                    Panel4_Border.Visible = vis4; Panel4_Border.Transparency = 1; Panel4_Border.ZIndex = 103
-                    Panel4_Border.Color = Color3.fromHex("#282828"); Panel4_Border.Filled = false; Panel4_Border.Thickness = 1
-                    Panel4_Border.Position = p4Pos; Panel4_Border.Size = Panel4.Size; Panel4_Border.Corner = 6
-
-                    local PanelText4 = newText()
-                    PanelText4.Visible = vis4; PanelText4.Transparency = 1; PanelText4.ZIndex = 120
-                    PanelText4.Color = Color3.fromHex("#FFFFFF")
-                    PanelText4.Position = p4Pos + Vector2.new(20, -5)
-                    PanelText4.Text = name; PanelText4.Size = 12; PanelText4.Center = false
-                    PanelText4.Outline = true; PanelText4.Font = Drawing.Fonts.Monospace
-
-                    tabData.panel4 = Panel4; tabData.panel4Border = Panel4_Border; tabData.panelText4 = PanelText4
-                    for _, el in ipairs({Panel4, Panel4_Border, PanelText4}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-
-                    panel = Panel4; panelText = PanelText4; panelYKey = "panel4Y"
-                else
-                    -- No Height on right side, fall back to Panel2
-                    panel = Panel2; panelText = PanelText2; panelYKey = "panel2Y"
-                end
-            else
-                -- 5+ sections: alternate left/right on main panels
-                local isLeft = (sectionIndex % 2 == 1)
-                panel = isLeft and Panel1 or Panel2
-                panelText = isLeft and PanelText1 or PanelText2
-                panelYKey = isLeft and "panel1Y" or "panel2Y"
-            end
-
+            local isLeft = (sectionIndex % 2 == 1)
+            local panel = isLeft and Panel1 or Panel2
+            local panelText = isLeft and PanelText1 or PanelText2
             panelText.Text = name
 
             local Section = {}
             Section._panel = panel
             Section._tabData = tabData
+            Section._isLeft = isLeft
             Section._tabIndex = tabIndex
 
             local function getY()
-                return tabData[panelYKey]
+                return isLeft and tabData.panel1Y or tabData.panel2Y
             end
             local function advanceY(amount)
-                tabData[panelYKey] = tabData[panelYKey] + amount
-            end
-
-            function Section:AddLabel(o)
-                o = o or {}
-                local y = getY()
-                local panelPos = panel.Position
-                local vis = (tabIndex == activeTab)
-                local lines = type(o) == "string" and {o} or (o.Lines or {o.Text or ""})
-
-                for i, line in ipairs(lines) do
-                    local t = newText()
-                    t.Visible = vis; t.Transparency = 1; t.ZIndex = 140
-                    t.Color = Color3.fromHex(line:sub(1, 2) == "- " and "#808080" or "#FFFFFF")
-                    t.Position = panelPos + Vector2.new(10, y + (i - 1) * 15)
-                    t.Text = line; t.Size = 12; t.Center = false
-                    t.Outline = true; t.Font = Drawing.Fonts.Monospace
-                    tabData.elements[#tabData.elements+1] = t
-                end
-
-                advanceY(#lines * 15 + 5)
+                if isLeft then tabData.panel1Y = tabData.panel1Y + amount
+                else tabData.panel2Y = tabData.panel2Y + amount end
             end
 
             function Section:AddToggle(o)
@@ -914,19 +511,21 @@ function Library:CreateWindow(opts)
                 box.Visible = vis; box.Transparency = 1; box.ZIndex = 130
                 box.Color = o.Default and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
                 box.Position = panelPos + Vector2.new(10, y)
-                box.Size = Vector2.new(15, 15); box.Filled = true; box.Corner = o.Corner or 4
+                box.Size = Vector2.new(15, 15); box.Filled = true
+                if o.Corner then box.Corner = o.Corner end
 
                 local boxBorder = Drawing.new("Square")
                 boxBorder.Visible = vis; boxBorder.Transparency = 1; boxBorder.ZIndex = 131
                 boxBorder.Color = Color3.fromHex("#282828"); boxBorder.Filled = false; boxBorder.Thickness = 1
-                boxBorder.Position = box.Position; boxBorder.Size = box.Size; boxBorder.Corner = o.Corner or 4
+                boxBorder.Position = box.Position; boxBorder.Size = box.Size
+                if o.Corner then boxBorder.Corner = o.Corner end
 
-                local nameText = newText()
+                local nameText = Drawing.new("Text")
                 nameText.Visible = vis; nameText.Transparency = 1; nameText.ZIndex = 140
                 nameText.Color = Color3.fromHex("#FFFFFF")
-                nameText.Position = panelPos + Vector2.new(35, y + 1)
+                nameText.Position = panelPos + Vector2.new(35, y + 2)
                 nameText.Text = o.Name or "Toggle"; nameText.Size = 12; nameText.Center = false
-                nameText.Outline = true; nameText.Font = Drawing.Fonts.Monospace
+                nameText.Outline = true; nameText.Font = Drawing.Fonts.UI
 
                 tabData.elements[#tabData.elements+1] = box
                 tabData.elements[#tabData.elements+1] = boxBorder
@@ -945,13 +544,13 @@ function Library:CreateWindow(opts)
                 -- Keybind on same row
                 local keybindData = nil
                 if o.Keybind then
-                    local bindText = newText()
+                    local bindText = Drawing.new("Text")
                     bindText.Visible = vis; bindText.Transparency = 1; bindText.ZIndex = 140
                     bindText.Color = Color3.fromHex("#505050")
                     bindText.Text = "[None]"
-                    bindText.Position = Vector2.new(rightAlignX(bindText.Text, panelPos, panelW), panelPos.Y + y + 1)
+                    bindText.Position = Vector2.new(rightAlignX(bindText.Text, panelPos, panelW), panelPos.Y + y + 2)
                     bindText.Size = 12; bindText.Center = false
-                    bindText.Outline = true; bindText.Font = Drawing.Fonts.Monospace
+                    bindText.Outline = true; bindText.Font = Drawing.Fonts.UI
                     tabData.elements[#tabData.elements+1] = bindText
 
                     keybindData = {
@@ -962,7 +561,7 @@ function Library:CreateWindow(opts)
                         active = false,
                         lastKeyState = false,
                         panel = panel,
-                        yPos = y + 1,
+                        yPos = y + 2,
                         toggleRef = toggleData,
                         isStandalone = false,
                         rcEnabled = true,
@@ -971,17 +570,17 @@ function Library:CreateWindow(opts)
                     allKeybinds[#allKeybinds+1] = keybindData
 
                     -- HK entry
-                    local hkName = newText()
+                    local hkName = Drawing.new("Text")
                     hkName.Visible = false; hkName.Transparency = 1; hkName.ZIndex = 720
                     hkName.Color = Color3.fromHex("#505050"); hkName.Position = Vector2.new(0,0)
                     hkName.Text = o.Name or "Toggle"; hkName.Size = 14; hkName.Center = false
-                    hkName.Outline = true; hkName.Font = Drawing.Fonts.Monospace
+                    hkName.Outline = true; hkName.Font = Drawing.Fonts.UI
 
-                    local hkMode = newText()
+                    local hkMode = Drawing.new("Text")
                     hkMode.Visible = false; hkMode.Transparency = 1; hkMode.ZIndex = 720
                     hkMode.Color = Color3.fromHex("#505050"); hkMode.Position = Vector2.new(0,0)
                     hkMode.Text = "[Always On]"; hkMode.Size = 14; hkMode.Center = false
-                    hkMode.Outline = true; hkMode.Font = Drawing.Fonts.Monospace
+                    hkMode.Outline = true; hkMode.Font = Drawing.Fonts.UI
 
                     hkEntries[#hkEntries+1] = {
                         nameDrawing = hkName, modeDrawing = hkMode,
@@ -1009,11 +608,6 @@ function Library:CreateWindow(opts)
                     box.Color = val and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
                 end
                 ret.Get = function() return toggleData.state end
-                configWidgets[#configWidgets+1] = {
-                    name = o.Name or "Toggle",
-                    get = function() return toggleData.state end,
-                    set = function(v) ret:Set(v) end,
-                }
                 return ret
             end
 
@@ -1029,20 +623,20 @@ function Library:CreateWindow(opts)
                 local suffix = o.Suffix or ""
                 local callback = o.Callback or function() end
 
-                local sliderLabel = newText()
+                local sliderLabel = Drawing.new("Text")
                 sliderLabel.Visible = vis; sliderLabel.Transparency = 1; sliderLabel.ZIndex = 140
                 sliderLabel.Color = Color3.fromHex("#FFFFFF")
                 sliderLabel.Position = panelPos + Vector2.new(10, y)
                 sliderLabel.Text = o.Name or "Slider"; sliderLabel.Size = 12; sliderLabel.Center = false
-                sliderLabel.Outline = true; sliderLabel.Font = Drawing.Fonts.Monospace
+                sliderLabel.Outline = true; sliderLabel.Font = Drawing.Fonts.UI
 
                 local valStr = tostring(math.floor(sVal)) .. suffix
-                local sliderValue = newText()
+                local sliderValue = Drawing.new("Text")
                 sliderValue.Visible = vis; sliderValue.Transparency = 1; sliderValue.ZIndex = 140
                 sliderValue.Color = Color3.fromHex("#FFFFFF")
                 sliderValue.Position = Vector2.new(rightAlignX(valStr, panelPos, panelW), panelPos.Y + y)
                 sliderValue.Text = valStr; sliderValue.Size = 12; sliderValue.Center = false
-                sliderValue.Outline = true; sliderValue.Font = Drawing.Fonts.Monospace
+                sliderValue.Outline = true; sliderValue.Font = Drawing.Fonts.UI
 
                 local sliderBar = Drawing.new("Square")
                 sliderBar.Visible = vis; sliderBar.Transparency = 1; sliderBar.ZIndex = 150
@@ -1059,30 +653,28 @@ function Library:CreateWindow(opts)
                 sliderFill.Visible = vis; sliderFill.Transparency = 1; sliderFill.ZIndex = 160
                 sliderFill.Color = Color3.fromHex("#282828")
                 sliderFill.Position = sliderBar.Position
-                sliderFill.Size = Vector2.new(215, 15); sliderFill.Filled = true; sliderFill.Corner = 6
+                sliderFill.Size = Vector2.new(215, 15); sliderFill.Filled = true
 
-                local sliderMinus = newText()
+                local sliderMinus = Drawing.new("Text")
                 sliderMinus.Visible = vis; sliderMinus.Transparency = 1; sliderMinus.ZIndex = 170
                 sliderMinus.Color = Color3.fromHex("#FFFFFF")
-                sliderMinus.Position = panelPos + Vector2.new(10, y + 15)
+                sliderMinus.Position = panelPos + Vector2.new(10, y + 17)
                 sliderMinus.Text = "-"; sliderMinus.Size = 14; sliderMinus.Center = false
-                sliderMinus.Outline = true; sliderMinus.Font = Drawing.Fonts.Monospace
+                sliderMinus.Outline = true; sliderMinus.Font = Drawing.Fonts.UI
 
-                local sliderPlus = newText()
+                local sliderPlus = Drawing.new("Text")
                 sliderPlus.Visible = vis; sliderPlus.Transparency = 1; sliderPlus.ZIndex = 170
                 sliderPlus.Color = Color3.fromHex("#FFFFFF")
-                sliderPlus.Position = panelPos + Vector2.new(240, y + 15)
+                sliderPlus.Position = panelPos + Vector2.new(240, y + 17)
                 sliderPlus.Text = "+"; sliderPlus.Size = 14; sliderPlus.Center = false
-                sliderPlus.Outline = true; sliderPlus.Font = Drawing.Fonts.Monospace
+                sliderPlus.Outline = true; sliderPlus.Font = Drawing.Fonts.UI
 
                 for _, el in ipairs({sliderLabel, sliderValue, sliderBar, sliderBarBorder, sliderFill, sliderMinus, sliderPlus}) do
                     tabData.elements[#tabData.elements+1] = el
                 end
 
-                local step = o.Step or 10
-
                 local sliderData = {
-                    val = sVal, min = sMin, max = sMax, suffix = suffix, step = step,
+                    val = sVal, min = sMin, max = sMax, suffix = suffix,
                     bar = sliderBar, fill = sliderFill, label = sliderLabel, valueText = sliderValue,
                     minus = sliderMinus, plus = sliderPlus, barBorder = sliderBarBorder,
                     panel = panel, yOffset = y, callback = callback,
@@ -1091,8 +683,9 @@ function Library:CreateWindow(opts)
                 sliderData.update = function()
                     local pct = (sliderData.val - sliderData.min) / (sliderData.max - sliderData.min)
                     local w = math.floor(pct * 215)
-                    sliderFill.Visible = w > 0 and sliderBar.Visible
+                    sliderFill.Visible = w > 0
                     sliderFill.Size = Vector2.new(w, 15)
+                    sliderFill.Corner = math.min(6, math.floor(w / 2))
                     local vs = tostring(math.floor(sliderData.val)) .. sliderData.suffix
                     sliderValue.Text = vs
                     sliderValue.Position = Vector2.new(rightAlignX(vs, panel.Position, panelW), sliderValue.Position.Y)
@@ -1101,7 +694,7 @@ function Library:CreateWindow(opts)
                 sliderData.update()
                 allSliders[#allSliders+1] = sliderData
                 tabData.sliders[#tabData.sliders+1] = sliderData
-                advanceY(45)
+                advanceY(40)
 
                 local ret = {}
                 ret.Set = function(_, val)
@@ -1109,11 +702,6 @@ function Library:CreateWindow(opts)
                     sliderData.update()
                 end
                 ret.Get = function() return sliderData.val end
-                configWidgets[#configWidgets+1] = {
-                    name = o.Name or "Slider",
-                    get = function() return sliderData.val end,
-                    set = function(v) ret:Set(v) end,
-                }
                 return ret
             end
 
@@ -1130,28 +718,28 @@ function Library:CreateWindow(opts)
                 local suffix = o.Suffix or ""
                 local callback = o.Callback or function() end
 
-                local rangeLabel = newText()
+                local rangeLabel = Drawing.new("Text")
                 rangeLabel.Visible = vis; rangeLabel.Transparency = 1; rangeLabel.ZIndex = 140
                 rangeLabel.Color = Color3.fromHex("#FFFFFF")
                 rangeLabel.Position = panelPos + Vector2.new(10, y)
                 rangeLabel.Text = o.Name or "Range"; rangeLabel.Size = 12; rangeLabel.Center = false
-                rangeLabel.Outline = true; rangeLabel.Font = Drawing.Fonts.Monospace
+                rangeLabel.Outline = true; rangeLabel.Font = Drawing.Fonts.UI
 
                 local rightStr = tostring(math.floor(rightVal)) .. suffix
-                local rightText = newText()
+                local rightText = Drawing.new("Text")
                 rightText.Visible = vis; rightText.Transparency = 1; rightText.ZIndex = 140
                 rightText.Color = Color3.fromHex("#FFFFFF")
                 rightText.Position = Vector2.new(rightAlignX(rightStr, panelPos, panelW), panelPos.Y + y)
                 rightText.Text = rightStr; rightText.Size = 12; rightText.Center = false
-                rightText.Outline = true; rightText.Font = Drawing.Fonts.Monospace
+                rightText.Outline = true; rightText.Font = Drawing.Fonts.UI
 
                 local leftStr = tostring(math.floor(leftVal)) .. suffix
-                local leftText = newText()
+                local leftText = Drawing.new("Text")
                 leftText.Visible = vis; leftText.Transparency = 1; leftText.ZIndex = 140
                 leftText.Color = Color3.fromHex("#FFFFFF")
-                leftText.Position = Vector2.new(rightText.Position.X - #leftStr * charW - 5, panelPos.Y + y)
+                leftText.Position = Vector2.new(rightText.Position.X - #leftStr * 6.5 - 5, panelPos.Y + y)
                 leftText.Text = leftStr; leftText.Size = 12; leftText.Center = false
-                leftText.Outline = true; leftText.Font = Drawing.Fonts.Monospace
+                leftText.Outline = true; leftText.Font = Drawing.Fonts.UI
 
                 local rangeBar = Drawing.new("Square")
                 rangeBar.Visible = vis; rangeBar.Transparency = 1; rangeBar.ZIndex = 150
@@ -1168,30 +756,28 @@ function Library:CreateWindow(opts)
                 rangeFill.Visible = vis; rangeFill.Transparency = 1; rangeFill.ZIndex = 160
                 rangeFill.Color = Color3.fromHex("#282828")
                 rangeFill.Position = rangeBar.Position
-                rangeFill.Size = Vector2.new(215, 15); rangeFill.Filled = true; rangeFill.Corner = 6
+                rangeFill.Size = Vector2.new(215, 15); rangeFill.Filled = true
 
-                local rangeMinus = newText()
+                local rangeMinus = Drawing.new("Text")
                 rangeMinus.Visible = vis; rangeMinus.Transparency = 1; rangeMinus.ZIndex = 170
                 rangeMinus.Color = Color3.fromHex("#FFFFFF")
-                rangeMinus.Position = panelPos + Vector2.new(10, y + 15)
+                rangeMinus.Position = panelPos + Vector2.new(10, y + 17)
                 rangeMinus.Text = "-"; rangeMinus.Size = 14; rangeMinus.Center = false
-                rangeMinus.Outline = true; rangeMinus.Font = Drawing.Fonts.Monospace
+                rangeMinus.Outline = true; rangeMinus.Font = Drawing.Fonts.UI
 
-                local rangePlus = newText()
+                local rangePlus = Drawing.new("Text")
                 rangePlus.Visible = vis; rangePlus.Transparency = 1; rangePlus.ZIndex = 170
                 rangePlus.Color = Color3.fromHex("#FFFFFF")
-                rangePlus.Position = panelPos + Vector2.new(240, y + 15)
+                rangePlus.Position = panelPos + Vector2.new(240, y + 17)
                 rangePlus.Text = "+"; rangePlus.Size = 14; rangePlus.Center = false
-                rangePlus.Outline = true; rangePlus.Font = Drawing.Fonts.Monospace
+                rangePlus.Outline = true; rangePlus.Font = Drawing.Fonts.UI
 
                 for _, el in ipairs({rangeLabel, rightText, leftText, rangeBar, rangeBarBorder, rangeFill, rangeMinus, rangePlus}) do
                     tabData.elements[#tabData.elements+1] = el
                 end
 
-                local step = o.Step or 1
-
                 local rsData = {
-                    left = leftVal, right = rightVal, min = sMin, max = sMax, suffix = suffix, step = step,
+                    left = leftVal, right = rightVal, min = sMin, max = sMax, suffix = suffix,
                     bar = rangeBar, fill = rangeFill, leftText = leftText, rightText = rightText,
                     label = rangeLabel, minus = rangeMinus, plus = rangePlus, barBorder = rangeBarBorder,
                     panel = panel, yOffset = y, callback = callback,
@@ -1203,15 +789,16 @@ function Library:CreateWindow(opts)
                     local leftX = math.floor(pctL * 215)
                     local rightX = math.floor(pctR * 215)
                     local fillW = math.max(rightX - leftX, 0)
-                    rangeFill.Visible = fillW > 0 and rangeBar.Visible
+                    rangeFill.Visible = fillW > 0
                     rangeFill.Position = rangeBar.Position + Vector2.new(leftX, 0)
                     rangeFill.Size = Vector2.new(fillW, 15)
+                    rangeFill.Corner = math.min(6, math.floor(fillW / 2))
                     local rs = tostring(math.floor(rsData.right)) .. rsData.suffix
                     local ls = tostring(math.floor(rsData.left)) .. rsData.suffix
                     rightText.Text = rs
                     rightText.Position = Vector2.new(rightAlignX(rs, panel.Position, panelW), rightText.Position.Y)
                     leftText.Text = ls
-                    leftText.Position = Vector2.new(rightText.Position.X - #ls * charW - 5, leftText.Position.Y)
+                    leftText.Position = Vector2.new(rightText.Position.X - #ls * 6.5 - 5, leftText.Position.Y)
                 end
 
                 rsData.update()
@@ -1222,11 +809,6 @@ function Library:CreateWindow(opts)
                 local ret = {}
                 ret.SetLeft = function(_, val) rsData.left = math.clamp(val, sMin, rsData.right - 10); rsData.update() end
                 ret.SetRight = function(_, val) rsData.right = math.clamp(val, rsData.left + 10, sMax); rsData.update() end
-                configWidgets[#configWidgets+1] = {
-                    name = o.Name or "RangeSlider",
-                    get = function() return {rsData.left, rsData.right} end,
-                    set = function(v) if type(v) == "table" then ret:SetLeft(v[1]); ret:SetRight(v[2]) end end,
-                }
                 return ret
             end
 
@@ -1237,25 +819,23 @@ function Library:CreateWindow(opts)
                 local panelW = panel.Size.X
                 local vis = (tabIndex == activeTab)
 
-                local nameText = newText()
+                local nameText = Drawing.new("Text")
                 nameText.Visible = vis; nameText.Transparency = 1; nameText.ZIndex = 140
                 nameText.Color = Color3.fromHex("#FFFFFF")
                 nameText.Position = panelPos + Vector2.new(10, y)
                 nameText.Text = o.Name or "Keybind"; nameText.Size = 12; nameText.Center = false
-                nameText.Outline = true; nameText.Font = Drawing.Fonts.Monospace
+                nameText.Outline = true; nameText.Font = Drawing.Fonts.UI
 
-                local bindText = newText()
+                local bindText = Drawing.new("Text")
                 bindText.Visible = vis; bindText.Transparency = 1; bindText.ZIndex = 140
                 bindText.Color = Color3.fromHex("#505050")
                 bindText.Text = "[None]"
                 bindText.Position = Vector2.new(rightAlignX(bindText.Text, panelPos, panelW), panelPos.Y + y)
                 bindText.Size = 12; bindText.Center = false
-                bindText.Outline = true; bindText.Font = Drawing.Fonts.Monospace
+                bindText.Outline = true; bindText.Font = Drawing.Fonts.UI
 
                 tabData.elements[#tabData.elements+1] = nameText
                 tabData.elements[#tabData.elements+1] = bindText
-
-                local isMenuBind = o.MenuBind == true
 
                 local kbData = {
                     bindText = bindText,
@@ -1268,8 +848,7 @@ function Library:CreateWindow(opts)
                     yPos = y,
                     toggleRef = nil,
                     isStandalone = true,
-                    rcEnabled = not isMenuBind and (o.RCMenu ~= false),
-                    menuBind = isMenuBind,
+                    rcEnabled = (o.RCMenu ~= false),
                     callback = o.Callback or function() end,
                     nameText = nameText,
                 }
@@ -1282,28 +861,26 @@ function Library:CreateWindow(opts)
 
                 allKeybinds[#allKeybinds+1] = kbData
 
-                -- HK entry for standalone keybind (skip for menu bind)
-                if not isMenuBind then
-                    local hkName = newText()
-                    hkName.Visible = false; hkName.Transparency = 1; hkName.ZIndex = 720
-                    hkName.Color = Color3.fromHex("#505050"); hkName.Position = Vector2.new(0,0)
-                    hkName.Text = o.Name or "Keybind"; hkName.Size = 14; hkName.Center = false
-                    hkName.Outline = true; hkName.Font = Drawing.Fonts.Monospace
+                -- HK entry for standalone keybind
+                local hkName = Drawing.new("Text")
+                hkName.Visible = false; hkName.Transparency = 1; hkName.ZIndex = 720
+                hkName.Color = Color3.fromHex("#505050"); hkName.Position = Vector2.new(0,0)
+                hkName.Text = o.Name or "Keybind"; hkName.Size = 14; hkName.Center = false
+                hkName.Outline = true; hkName.Font = Drawing.Fonts.UI
 
-                    local hkMode = newText()
-                    hkMode.Visible = false; hkMode.Transparency = 1; hkMode.ZIndex = 720
-                    hkMode.Color = Color3.fromHex("#505050"); hkMode.Position = Vector2.new(0,0)
-                    hkMode.Text = "[Always On]"; hkMode.Size = 14; hkMode.Center = false
-                    hkMode.Outline = true; hkMode.Font = Drawing.Fonts.Monospace
+                local hkMode = Drawing.new("Text")
+                hkMode.Visible = false; hkMode.Transparency = 1; hkMode.ZIndex = 720
+                hkMode.Color = Color3.fromHex("#505050"); hkMode.Position = Vector2.new(0,0)
+                hkMode.Text = "[Always On]"; hkMode.Size = 14; hkMode.Center = false
+                hkMode.Outline = true; hkMode.Font = Drawing.Fonts.UI
 
-                    hkEntries[#hkEntries+1] = {
-                        nameDrawing = hkName, modeDrawing = hkMode,
-                        getVisible = function() return kbData.key ~= nil end,
-                        getActive = function() return kbData.active end,
-                        getMode = function() return kbData.mode end,
-                        getName = function() return o.Name or "Keybind" end,
-                    }
-                end
+                hkEntries[#hkEntries+1] = {
+                    nameDrawing = hkName, modeDrawing = hkMode,
+                    getVisible = function() return kbData.key ~= nil end,
+                    getActive = function() return kbData.active end,
+                    getMode = function() return kbData.mode end,
+                    getName = function() return o.Name or "Keybind" end,
+                }
 
                 advanceY(20)
 
@@ -1317,15 +894,7 @@ function Library:CreateWindow(opts)
                     else
                         kbData.bindText.Text = "[None]"
                     end
-                    if kbData.menuBind then menuKey = key or 35 end
                     kbData.bindText.Position = Vector2.new(rightAlignX(kbData.bindText.Text, panel.Position, panel.Size.X), panel.Position.Y + y)
-                end
-                if not o.MenuBind then
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Keybind",
-                        get = function() return {key = kbData.key, mode = kbData.mode} end,
-                        set = function(v) if type(v) == "table" then kbRet:Set(v.key); if v.mode then kbData.mode = v.mode end end end,
-                    }
                 end
                 return kbRet
             end
@@ -1338,29 +907,25 @@ function Library:CreateWindow(opts)
                 local vis = (tabIndex == activeTab)
                 local callback = o.Callback or function() end
                 local defaultColor = o.Default or Color3.new(1, 0, 0)
-                local hasToggle = (o.Toggle ~= false)
 
-                -- Toggle checkbox (only if hasToggle)
-                local box, boxBorder
-                if hasToggle then
-                    box = Drawing.new("Square")
-                    box.Visible = vis; box.Transparency = 1; box.ZIndex = 130
-                    box.Color = Color3.fromHex("#0a0a0a")
-                    box.Position = panelPos + Vector2.new(10, y)
-                    box.Size = Vector2.new(15, 15); box.Filled = true; box.Corner = 4
+                -- Toggle checkbox
+                local box = Drawing.new("Square")
+                box.Visible = vis; box.Transparency = 1; box.ZIndex = 130
+                box.Color = Color3.fromHex("#0a0a0a")
+                box.Position = panelPos + Vector2.new(10, y)
+                box.Size = Vector2.new(15, 15); box.Filled = true
 
-                    boxBorder = Drawing.new("Square")
-                    boxBorder.Visible = vis; boxBorder.Transparency = 1; boxBorder.ZIndex = 131
-                    boxBorder.Color = Color3.fromHex("#282828"); boxBorder.Filled = false; boxBorder.Thickness = 1
-                    boxBorder.Position = box.Position; boxBorder.Size = box.Size; boxBorder.Corner = 4
-                end
+                local boxBorder = Drawing.new("Square")
+                boxBorder.Visible = vis; boxBorder.Transparency = 1; boxBorder.ZIndex = 131
+                boxBorder.Color = Color3.fromHex("#282828"); boxBorder.Filled = false; boxBorder.Thickness = 1
+                boxBorder.Position = box.Position; boxBorder.Size = box.Size
 
-                local nameText = newText()
+                local nameText = Drawing.new("Text")
                 nameText.Visible = vis; nameText.Transparency = 1; nameText.ZIndex = 140
                 nameText.Color = Color3.fromHex("#FFFFFF")
-                nameText.Position = panelPos + Vector2.new(hasToggle and 35 or 10, y + 1)
+                nameText.Position = panelPos + Vector2.new(35, y + 2)
                 nameText.Text = o.Name or "Color"; nameText.Size = 12; nameText.Center = false
-                nameText.Outline = true; nameText.Font = Drawing.Fonts.Monospace
+                nameText.Outline = true; nameText.Font = Drawing.Fonts.UI
 
                 -- Color preview square
                 local colorPreview = Drawing.new("Square")
@@ -1374,14 +939,8 @@ function Library:CreateWindow(opts)
                 cpBorder.Color = Color3.fromHex("#282828"); cpBorder.Filled = false; cpBorder.Thickness = 1
                 cpBorder.Position = colorPreview.Position; cpBorder.Size = colorPreview.Size
 
-                if hasToggle then
-                    for _, el in ipairs({box, boxBorder, nameText, colorPreview, cpBorder}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-                else
-                    for _, el in ipairs({nameText, colorPreview, cpBorder}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
+                for _, el in ipairs({box, boxBorder, nameText, colorPreview, cpBorder}) do
+                    tabData.elements[#tabData.elements+1] = el
                 end
 
                 local toggleState = false
@@ -1402,7 +961,7 @@ function Library:CreateWindow(opts)
                 CPBG_Border.Color = Color3.fromHex("#282828"); CPBG_Border.Filled = false; CPBG_Border.Thickness = 1
                 CPBG_Border.Position = cpAnchor; CPBG_Border.Size = Vector2.new(170, 220); CPBG_Border.Corner = 6
 
-                local CPTitle = newText("cptitle")
+                local CPTitle = Drawing.new("Text")
                 CPTitle.Visible = false; CPTitle.Transparency = 1; CPTitle.ZIndex = 510
                 CPTitle.Color = Color3.fromHex("#FFFFFF")
                 CPTitle.Position = cpAnchor + Vector2.new(10, 5)
@@ -1511,11 +1070,11 @@ function Library:CreateWindow(opts)
                 CopyBtn_Border.Color = Color3.fromHex("#282828"); CopyBtn_Border.Filled = false; CopyBtn_Border.Thickness = 1
                 CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Size = Vector2.new(74, 20); CopyBtn_Border.Corner = 6
 
-                local CopyText = newText()
+                local CopyText = Drawing.new("Text")
                 CopyText.Visible = false; CopyText.Transparency = 1; CopyText.ZIndex = 555
-                CopyText.Color = Color3.fromHex("#FFFFFF"); CopyText.Position = cpAnchor + Vector2.new(35, 194)
+                CopyText.Color = Color3.fromHex("#FFFFFF"); CopyText.Position = cpAnchor + Vector2.new(32, 194)
                 CopyText.Text = "Copy"; CopyText.Size = 14; CopyText.Center = false
-                CopyText.Outline = true; CopyText.Font = Drawing.Fonts.Monospace
+                CopyText.Outline = true; CopyText.Font = Drawing.Fonts.UI
 
                 local PasteBtn = Drawing.new("Square")
                 PasteBtn.Visible = false; PasteBtn.Transparency = 1; PasteBtn.ZIndex = 550
@@ -1527,11 +1086,11 @@ function Library:CreateWindow(opts)
                 PasteBtn_Border.Color = Color3.fromHex("#282828"); PasteBtn_Border.Filled = false; PasteBtn_Border.Thickness = 1
                 PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Size = Vector2.new(74, 20); PasteBtn_Border.Corner = 6
 
-                local PasteText = newText()
+                local PasteText = Drawing.new("Text")
                 PasteText.Visible = false; PasteText.Transparency = 1; PasteText.ZIndex = 555
-                PasteText.Color = Color3.fromHex("#FFFFFF"); PasteText.Position = cpAnchor + Vector2.new(108, 194)
+                PasteText.Color = Color3.fromHex("#FFFFFF"); PasteText.Position = cpAnchor + Vector2.new(105, 194)
                 PasteText.Text = "Paste"; PasteText.Size = 14; PasteText.Center = false
-                PasteText.Outline = true; PasteText.Font = Drawing.Fonts.Monospace
+                PasteText.Outline = true; PasteText.Font = Drawing.Fonts.UI
 
                 local allCPElements = {CPBG, CPBG_Border, CPTitle, SVArea, SVArea_Border, SVSelector, HueSlider, BrightSlider, HueBG, HueBG_Border, BrightBG, BrightBG_Border, CopyBtn, CopyBtn_Border, CopyText, PasteBtn, PasteBtn_Border, PasteText}
 
@@ -1553,9 +1112,9 @@ function Library:CreateWindow(opts)
                     HueSlider.Position = cpAnchor + Vector2.new(10 + (cpH / 360) * 145, 142)
                     BrightSlider.Position = cpAnchor + Vector2.new(10 + cpV * 145, 168)
                     CopyBtn.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192)
-                    CopyText.Position = cpAnchor + Vector2.new(35, 194)
+                    CopyText.Position = cpAnchor + Vector2.new(32, 194)
                     PasteBtn.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192)
-                    PasteText.Position = cpAnchor + Vector2.new(108, 194)
+                    PasteText.Position = cpAnchor + Vector2.new(105, 194)
                 end
 
                 local function updateCPColor(source)
@@ -1583,18 +1142,10 @@ function Library:CreateWindow(opts)
                     colorPreview = colorPreview, cpBorder = cpBorder,
                     SVArea = SVArea, hueSegments = hueSegments, brightSegments = brightSegments,
                     CPBG = CPBG, CopyBtn = CopyBtn, PasteBtn = PasteBtn,
-                    box = box or colorPreview, boxBorder = boxBorder, toggleState = false,
-                    hasToggle = hasToggle,
+                    box = box, boxBorder = boxBorder, toggleState = false,
                     panel = panel, yOffset = y,
                     updatePositions = updateCPPositions, updateColor = updateCPColor,
                 }
-
-                cpData.setHSV = function(h, s, v)
-                    cpH = h; cpS = s; cpV = v
-                    cpData.cpH = h; cpData.cpS = s; cpData.cpV = v
-                    local fr, fg, fb = hsvToRgb(h, s, v)
-                    colorPreview.Color = Color3.new(fr, fg, fb)
-                end
 
                 cpData.toggle = function(show)
                     cpData.cpOpen = show
@@ -1656,7 +1207,6 @@ function Library:CreateWindow(opts)
                 end
 
                 cpData.onClick = function()
-                    if not hasToggle then return end
                     cpData.toggleState = not cpData.toggleState
                     box.Color = cpData.toggleState and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
                 end
@@ -1669,30 +1219,10 @@ function Library:CreateWindow(opts)
                     local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
                     return Color3.new(rr, gg, bb)
                 end
-                configWidgets[#configWidgets+1] = {
-                    name = o.Name or "Colorpicker",
-                    get = function()
-                        local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
-                        local d = {r = math.floor(rr * 255), g = math.floor(gg * 255), b = math.floor(bb * 255)}
-                        if hasToggle then d.toggle = cpData.toggleState end
-                        return d
-                    end,
-                    set = function(v)
-                        if type(v) ~= "table" then return end
-                        if v.r then
-                            local h, s, val = rgbToHsv(v.r / 255, v.g / 255, v.b / 255)
-                            cpData.setHSV(h, s, val)
-                        end
-                        if v.toggle ~= nil and hasToggle then
-                            cpData.toggleState = v.toggle
-                            cpData.box.Color = v.toggle and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
-                        end
-                    end,
-                }
                 return ret
             end
 
-            function Section:AddSingle(o)
+            function Section:AddDropdown(o)
                 o = o or {}
                 local y = getY()
                 local panelPos = panel.Position
@@ -1700,179 +1230,159 @@ function Library:CreateWindow(opts)
                 local options = o.Options or {}
                 local selected = o.Default or (options[1] or "")
                 local callback = o.Callback or function() end
-                local isDrop = (o.Drop ~= false)
 
-                if isDrop then
-                    -- Dropdown mode (popup)
-                    local ddLabel = newText()
-                    ddLabel.Visible = vis; ddLabel.Transparency = 1; ddLabel.ZIndex = 360
-                    ddLabel.Color = Color3.fromHex("#FFFFFF")
-                    ddLabel.Position = panelPos + Vector2.new(10, y)
-                    ddLabel.Text = o.Name or "Select"; ddLabel.Size = 12; ddLabel.Center = false
-                    ddLabel.Outline = true; ddLabel.Font = Drawing.Fonts.Monospace
+                local ddLabel = Drawing.new("Text")
+                ddLabel.Visible = vis; ddLabel.Transparency = 1; ddLabel.ZIndex = 360
+                ddLabel.Color = Color3.fromHex("#FFFFFF")
+                ddLabel.Position = panelPos + Vector2.new(10, y)
+                ddLabel.Text = o.Name or "Dropdown"; ddLabel.Size = 12; ddLabel.Center = false
+                ddLabel.Outline = true; ddLabel.Font = Drawing.Fonts.UI
 
-                    local ddBar = Drawing.new("Square")
-                    ddBar.Visible = vis; ddBar.Transparency = 1; ddBar.ZIndex = 360
-                    ddBar.Color = Color3.fromHex("#0a0a0a")
-                    ddBar.Position = panelPos + Vector2.new(10, y + 15)
-                    ddBar.Size = Vector2.new(240, 20); ddBar.Filled = true; ddBar.Corner = 6
+                local ddBar = Drawing.new("Square")
+                ddBar.Visible = vis; ddBar.Transparency = 1; ddBar.ZIndex = 360
+                ddBar.Color = Color3.fromHex("#0a0a0a")
+                ddBar.Position = panelPos + Vector2.new(10, y + 15)
+                ddBar.Size = Vector2.new(240, 20); ddBar.Filled = true; ddBar.Corner = 6
 
-                    local ddBarBorder = Drawing.new("Square")
-                    ddBarBorder.Visible = vis; ddBarBorder.Transparency = 1; ddBarBorder.ZIndex = 361
-                    ddBarBorder.Color = Color3.fromHex("#282828"); ddBarBorder.Filled = false; ddBarBorder.Thickness = 1
-                    ddBarBorder.Position = ddBar.Position; ddBarBorder.Size = ddBar.Size; ddBarBorder.Corner = 6
+                local ddBarBorder = Drawing.new("Square")
+                ddBarBorder.Visible = vis; ddBarBorder.Transparency = 1; ddBarBorder.ZIndex = 361
+                ddBarBorder.Color = Color3.fromHex("#282828"); ddBarBorder.Filled = false; ddBarBorder.Thickness = 1
+                ddBarBorder.Position = ddBar.Position; ddBarBorder.Size = ddBar.Size; ddBarBorder.Corner = 6
 
-                    local ddBarText = newText()
-                    ddBarText.Visible = vis; ddBarText.Transparency = 1; ddBarText.ZIndex = 370
-                    ddBarText.Color = Color3.fromHex("#646464")
-                    ddBarText.Position = ddBar.Position + Vector2.new(10, 3)
-                    ddBarText.Text = selected; ddBarText.Size = 12; ddBarText.Center = false
-                    ddBarText.Outline = true; ddBarText.Font = Drawing.Fonts.Monospace
+                local ddBarText = Drawing.new("Text")
+                ddBarText.Visible = vis; ddBarText.Transparency = 1; ddBarText.ZIndex = 370
+                ddBarText.Color = Color3.fromHex("#646464")
+                ddBarText.Position = ddBar.Position + Vector2.new(10, 5)
+                ddBarText.Text = selected; ddBarText.Size = 12; ddBarText.Center = false
+                ddBarText.Outline = true; ddBarText.Font = Drawing.Fonts.UI
 
-                    local ddArrow = newText()
-                    ddArrow.Visible = vis; ddArrow.Transparency = 1; ddArrow.ZIndex = 370
-                    ddArrow.Color = Color3.fromHex("#FFFFFF")
-                    ddArrow.Position = ddBar.Position + Vector2.new(225, 3)
-                    ddArrow.Text = "V"; ddArrow.Size = 12; ddArrow.Center = false
-                    ddArrow.Outline = true; ddArrow.Font = Drawing.Fonts.Monospace
+                local ddArrow = Drawing.new("Text")
+                ddArrow.Visible = vis; ddArrow.Transparency = 1; ddArrow.ZIndex = 370
+                ddArrow.Color = Color3.fromHex("#FFFFFF")
+                ddArrow.Position = ddBar.Position + Vector2.new(225, 4)
+                ddArrow.Text = "V"; ddArrow.Size = 12; ddArrow.Center = false
+                ddArrow.Outline = true; ddArrow.Font = Drawing.Fonts.UI
 
-                    local ddDrop = Drawing.new("Square")
-                    ddDrop.Visible = false; ddDrop.Transparency = 1; ddDrop.ZIndex = 450
-                    ddDrop.Color = Color3.fromHex("#0a0a0a")
-                    ddDrop.Position = ddBar.Position + Vector2.new(0, 25)
-                    ddDrop.Size = Vector2.new(240, #options * 15 + 15); ddDrop.Filled = true; ddDrop.Corner = 6
+                local ddDrop = Drawing.new("Square")
+                ddDrop.Visible = false; ddDrop.Transparency = 1; ddDrop.ZIndex = 450
+                ddDrop.Color = Color3.fromHex("#0a0a0a")
+                ddDrop.Position = ddBar.Position + Vector2.new(0, 25)
+                ddDrop.Size = Vector2.new(240, #options * 15 + 20); ddDrop.Filled = true; ddDrop.Corner = 6
 
-                    local ddDropBorder = Drawing.new("Square")
-                    ddDropBorder.Visible = false; ddDropBorder.Transparency = 1; ddDropBorder.ZIndex = 451
-                    ddDropBorder.Color = Color3.fromHex("#282828"); ddDropBorder.Filled = false; ddDropBorder.Thickness = 1
-                    ddDropBorder.Position = ddDrop.Position; ddDropBorder.Size = ddDrop.Size; ddDropBorder.Corner = 6
+                local ddDropBorder = Drawing.new("Square")
+                ddDropBorder.Visible = false; ddDropBorder.Transparency = 1; ddDropBorder.ZIndex = 451
+                ddDropBorder.Color = Color3.fromHex("#282828"); ddDropBorder.Filled = false; ddDropBorder.Thickness = 1
+                ddDropBorder.Position = ddDrop.Position; ddDropBorder.Size = ddDrop.Size; ddDropBorder.Corner = 6
 
-                    local optTexts = {}
-                    for i, optName in ipairs(options) do
-                        local ot = newText()
-                        ot.Visible = false; ot.Transparency = 1; ot.ZIndex = 460
-                        ot.Color = (optName == selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        ot.Position = ddDrop.Position + Vector2.new(10, 8 + (i - 1) * 15)
-                        ot.Text = optName; ot.Size = 12; ot.Center = false
-                        ot.Outline = true; ot.Font = Drawing.Fonts.Monospace
-                        optTexts[i] = ot
-                    end
-
-                    for _, el in ipairs({ddLabel, ddBar, ddBarBorder, ddBarText, ddArrow}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-
-                    local ddData = {
-                        isOpen = false, selected = selected, options = options,
-                        bar = ddBar, drop = ddDrop, dropBorder = ddDropBorder,
-                        barText = ddBarText, optTexts = optTexts, arrow = ddArrow,
-                        label = ddLabel, barBorder = ddBarBorder,
-                        panel = panel, yOffset = y, callback = callback,
-                    }
-
-                    ddData.setOpen = function(show)
-                        if show then
-                            ddDrop.Position = ddBar.Position + Vector2.new(0, 25)
-                            ddDropBorder.Position = ddDrop.Position
-                            ddDropBorder.Size = ddDrop.Size
-                            for i, ot in ipairs(optTexts) do
-                                ot.Position = ddDrop.Position + Vector2.new(10, 8 + (i - 1) * 15)
-                            end
-                        end
-                        ddData.isOpen = show
-                        ddDrop.Visible = show; ddDropBorder.Visible = show
-                        for _, ot in ipairs(optTexts) do ot.Visible = show end
-                    end
-
-                    ddData.updateColors = function()
-                        for i, ot in ipairs(optTexts) do
-                            ot.Color = (options[i] == ddData.selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        end
-                        ddBarText.Text = ddData.selected
-                    end
-
-                    allDropdowns[#allDropdowns+1] = ddData
-                    advanceY(40)
-
-                    local ddRet = {}
-                    ddRet.Get = function() return ddData.selected end
-                    ddRet.Set = function(_, val)
-                        ddData.selected = val
-                        ddData.updateColors()
-                    end
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Single",
-                        get = function() return ddData.selected end,
-                        set = function(v) ddRet:Set(v) end,
-                    }
-                    return ddRet
-                else
-                    -- Inline list mode
-                    local ssLabel = newText()
-                    ssLabel.Visible = vis; ssLabel.Transparency = 1; ssLabel.ZIndex = 360
-                    ssLabel.Color = Color3.fromHex("#FFFFFF")
-                    ssLabel.Position = panelPos + Vector2.new(10, y)
-                    ssLabel.Text = o.Name or "Select"; ssLabel.Size = 12; ssLabel.Center = false
-                    ssLabel.Outline = true; ssLabel.Font = Drawing.Fonts.Monospace
-
-                    local ssBox = Drawing.new("Square")
-                    ssBox.Visible = vis; ssBox.Transparency = 1; ssBox.ZIndex = 360
-                    ssBox.Color = Color3.fromHex("#0a0a0a")
-                    ssBox.Position = panelPos + Vector2.new(10, y + 15)
-                    ssBox.Size = Vector2.new(240, #options * 15 + 15); ssBox.Filled = true; ssBox.Corner = 6
-
-                    local ssBoxBorder = Drawing.new("Square")
-                    ssBoxBorder.Visible = vis; ssBoxBorder.Transparency = 1; ssBoxBorder.ZIndex = 361
-                    ssBoxBorder.Color = Color3.fromHex("#282828"); ssBoxBorder.Filled = false; ssBoxBorder.Thickness = 1
-                    ssBoxBorder.Position = ssBox.Position; ssBoxBorder.Size = ssBox.Size; ssBoxBorder.Corner = 6
-
-                    local optTexts = {}
-                    for i, optName in ipairs(options) do
-                        local ot = newText()
-                        ot.Visible = vis; ot.Transparency = 1; ot.ZIndex = 370
-                        ot.Color = (optName == selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        ot.Position = ssBox.Position + Vector2.new(10, 8 + (i - 1) * 15)
-                        ot.Text = optName; ot.Size = 12; ot.Center = false
-                        ot.Outline = true; ot.Font = Drawing.Fonts.Monospace
-                        optTexts[i] = ot
-                    end
-
-                    for _, el in ipairs({ssLabel, ssBox, ssBoxBorder}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-                    for _, ot in ipairs(optTexts) do tabData.elements[#tabData.elements+1] = ot end
-
-                    local ssData = {
-                        selected = selected, options = options, optTexts = optTexts,
-                        box = ssBox, boxBorder = ssBoxBorder, label = ssLabel,
-                        panel = panel, yOffset = y, callback = callback,
-                    }
-
-                    ssData.updateColors = function()
-                        for i, ot in ipairs(optTexts) do
-                            ot.Color = (options[i] == ssData.selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        end
-                    end
-
-                    allSelects[#allSelects+1] = ssData
-                    advanceY(#options * 15 + 35 + 5)
-
-                    local ssRet = {}
-                    ssRet.Get = function() return ssData.selected end
-                    ssRet.Set = function(_, val)
-                        ssData.selected = val
-                        ssData.updateColors()
-                    end
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Single",
-                        get = function() return ssData.selected end,
-                        set = function(v) ssRet:Set(v) end,
-                    }
-                    return ssRet
+                local optTexts = {}
+                for i, optName in ipairs(options) do
+                    local ot = Drawing.new("Text")
+                    ot.Visible = false; ot.Transparency = 1; ot.ZIndex = 460
+                    ot.Color = (optName == selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
+                    ot.Position = ddDrop.Position + Vector2.new(10, 10 + (i - 1) * 15)
+                    ot.Text = optName; ot.Size = 12; ot.Center = false
+                    ot.Outline = true; ot.Font = Drawing.Fonts.UI
+                    optTexts[i] = ot
                 end
+
+                for _, el in ipairs({ddLabel, ddBar, ddBarBorder, ddBarText, ddArrow}) do
+                    tabData.elements[#tabData.elements+1] = el
+                end
+
+                local ddData = {
+                    isOpen = false, selected = selected, options = options,
+                    bar = ddBar, drop = ddDrop, dropBorder = ddDropBorder,
+                    barText = ddBarText, optTexts = optTexts, arrow = ddArrow,
+                    label = ddLabel, barBorder = ddBarBorder,
+                    panel = panel, yOffset = y, callback = callback,
+                }
+
+                ddData.setOpen = function(show)
+                    ddData.isOpen = show
+                    ddDrop.Visible = show; ddDropBorder.Visible = show
+                    for _, ot in ipairs(optTexts) do ot.Visible = show end
+                end
+
+                ddData.updateColors = function()
+                    for i, ot in ipairs(optTexts) do
+                        ot.Color = (options[i] == ddData.selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
+                    end
+                    ddBarText.Text = ddData.selected
+                end
+
+                allDropdowns[#allDropdowns+1] = ddData
+                advanceY(40)
+
+                local ddRet = {}
+                ddRet.Get = function() return ddData.selected end
+                ddRet.Set = function(_, val)
+                    ddData.selected = val
+                    ddData.updateColors()
+                end
+                return ddRet
             end
 
-            function Section:AddMulti(o)
+            function Section:AddSelect(o)
+                o = o or {}
+                local y = getY()
+                local panelPos = panel.Position
+                local vis = (tabIndex == activeTab)
+                local options = o.Options or {}
+                local selected = o.Default or (options[1] or "")
+                local callback = o.Callback or function() end
+
+                local ssLabel = Drawing.new("Text")
+                ssLabel.Visible = vis; ssLabel.Transparency = 1; ssLabel.ZIndex = 360
+                ssLabel.Color = Color3.fromHex("#FFFFFF")
+                ssLabel.Position = panelPos + Vector2.new(10, y)
+                ssLabel.Text = o.Name or "Select"; ssLabel.Size = 12; ssLabel.Center = false
+                ssLabel.Outline = true; ssLabel.Font = Drawing.Fonts.UI
+
+                local ssBox = Drawing.new("Square")
+                ssBox.Visible = vis; ssBox.Transparency = 1; ssBox.ZIndex = 360
+                ssBox.Color = Color3.fromHex("#0a0a0a")
+                ssBox.Position = panelPos + Vector2.new(10, y + 15)
+                ssBox.Size = Vector2.new(240, #options * 15 + 20); ssBox.Filled = true; ssBox.Corner = 6
+
+                local ssBoxBorder = Drawing.new("Square")
+                ssBoxBorder.Visible = vis; ssBoxBorder.Transparency = 1; ssBoxBorder.ZIndex = 361
+                ssBoxBorder.Color = Color3.fromHex("#282828"); ssBoxBorder.Filled = false; ssBoxBorder.Thickness = 1
+                ssBoxBorder.Position = ssBox.Position; ssBoxBorder.Size = ssBox.Size; ssBoxBorder.Corner = 6
+
+                local optTexts = {}
+                for i, optName in ipairs(options) do
+                    local ot = Drawing.new("Text")
+                    ot.Visible = vis; ot.Transparency = 1; ot.ZIndex = 370
+                    ot.Color = (optName == selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
+                    ot.Position = ssBox.Position + Vector2.new(10, 10 + (i - 1) * 15)
+                    ot.Text = optName; ot.Size = 12; ot.Center = false
+                    ot.Outline = true; ot.Font = Drawing.Fonts.UI
+                    optTexts[i] = ot
+                end
+
+                for _, el in ipairs({ssLabel, ssBox, ssBoxBorder}) do
+                    tabData.elements[#tabData.elements+1] = el
+                end
+                for _, ot in ipairs(optTexts) do tabData.elements[#tabData.elements+1] = ot end
+
+                local ssData = {
+                    selected = selected, options = options, optTexts = optTexts,
+                    box = ssBox, boxBorder = ssBoxBorder, label = ssLabel,
+                    panel = panel, yOffset = y, callback = callback,
+                }
+
+                ssData.updateColors = function()
+                    for i, ot in ipairs(optTexts) do
+                        ot.Color = (options[i] == ssData.selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
+                    end
+                end
+
+                allSelects[#allSelects+1] = ssData
+                advanceY(#options * 15 + 35 + 5)
+                return ssData
+            end
+
+            function Section:AddMultiDropdown(o)
                 o = o or {}
                 local y = getY()
                 local panelPos = panel.Position
@@ -1881,196 +1391,111 @@ function Library:CreateWindow(opts)
                 local selectedMap = {}
                 if o.Default then for _, v in ipairs(o.Default) do selectedMap[v] = true end end
                 local callback = o.Callback or function() end
-                local isDrop = (o.Drop ~= false)
 
-                local function getSelected()
+                local mdLabel = Drawing.new("Text")
+                mdLabel.Visible = vis; mdLabel.Transparency = 1; mdLabel.ZIndex = 360
+                mdLabel.Color = Color3.fromHex("#FFFFFF")
+                mdLabel.Position = panelPos + Vector2.new(10, y)
+                mdLabel.Text = o.Name or "MultiSelect"; mdLabel.Size = 12; mdLabel.Center = false
+                mdLabel.Outline = true; mdLabel.Font = Drawing.Fonts.UI
+
+                local mdBar = Drawing.new("Square")
+                mdBar.Visible = vis; mdBar.Transparency = 1; mdBar.ZIndex = 360
+                mdBar.Color = Color3.fromHex("#0a0a0a")
+                mdBar.Position = panelPos + Vector2.new(10, y + 15)
+                mdBar.Size = Vector2.new(240, 20); mdBar.Filled = true; mdBar.Corner = 6
+
+                local mdBarBorder = Drawing.new("Square")
+                mdBarBorder.Visible = vis; mdBarBorder.Transparency = 1; mdBarBorder.ZIndex = 361
+                mdBarBorder.Color = Color3.fromHex("#282828"); mdBarBorder.Filled = false; mdBarBorder.Thickness = 1
+                mdBarBorder.Position = mdBar.Position; mdBarBorder.Size = mdBar.Size; mdBarBorder.Corner = 6
+
+                local mdBarText = Drawing.new("Text")
+                mdBarText.Visible = vis; mdBarText.Transparency = 1; mdBarText.ZIndex = 370
+                mdBarText.Color = Color3.fromHex("#646464")
+                mdBarText.Position = mdBar.Position + Vector2.new(10, 5)
+                mdBarText.Text = "None"; mdBarText.Size = 12; mdBarText.Center = false
+                mdBarText.Outline = true; mdBarText.Font = Drawing.Fonts.UI
+
+                local mdArrow = Drawing.new("Text")
+                mdArrow.Visible = vis; mdArrow.Transparency = 1; mdArrow.ZIndex = 370
+                mdArrow.Color = Color3.fromHex("#FFFFFF")
+                mdArrow.Position = mdBar.Position + Vector2.new(225, 4)
+                mdArrow.Text = "V"; mdArrow.Size = 12; mdArrow.Center = false
+                mdArrow.Outline = true; mdArrow.Font = Drawing.Fonts.UI
+
+                local mdDrop = Drawing.new("Square")
+                mdDrop.Visible = false; mdDrop.Transparency = 1; mdDrop.ZIndex = 450
+                mdDrop.Color = Color3.fromHex("#0a0a0a")
+                mdDrop.Position = mdBar.Position + Vector2.new(0, 25)
+                mdDrop.Size = Vector2.new(240, #options * 15 + 20); mdDrop.Filled = true; mdDrop.Corner = 6
+
+                local mdDropBorder = Drawing.new("Square")
+                mdDropBorder.Visible = false; mdDropBorder.Transparency = 1; mdDropBorder.ZIndex = 451
+                mdDropBorder.Color = Color3.fromHex("#282828"); mdDropBorder.Filled = false; mdDropBorder.Thickness = 1
+                mdDropBorder.Position = mdDrop.Position; mdDropBorder.Size = mdDrop.Size; mdDropBorder.Corner = 6
+
+                local optTexts = {}
+                for i, optName in ipairs(options) do
+                    local ot = Drawing.new("Text")
+                    ot.Visible = false; ot.Transparency = 1; ot.ZIndex = 460
+                    ot.Color = selectedMap[optName] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
+                    ot.Position = mdDrop.Position + Vector2.new(10, 10 + (i - 1) * 15)
+                    ot.Text = optName; ot.Size = 12; ot.Center = false
+                    ot.Outline = true; ot.Font = Drawing.Fonts.UI
+                    optTexts[i] = ot
+                end
+
+                for _, el in ipairs({mdLabel, mdBar, mdBarBorder, mdBarText, mdArrow}) do
+                    tabData.elements[#tabData.elements+1] = el
+                end
+
+                local mdData = {
+                    isOpen = false, selectedMap = selectedMap, options = options,
+                    bar = mdBar, drop = mdDrop, dropBorder = mdDropBorder,
+                    barText = mdBarText, optTexts = optTexts, arrow = mdArrow,
+                    label = mdLabel, barBorder = mdBarBorder,
+                    panel = panel, yOffset = y, callback = callback,
+                }
+
+                mdData.setOpen = function(show)
+                    mdData.isOpen = show
+                    mdDrop.Visible = show; mdDropBorder.Visible = show
+                    for _, ot in ipairs(optTexts) do ot.Visible = show end
+                end
+
+                mdData.updateColors = function()
+                    for i, ot in ipairs(optTexts) do
+                        ot.Color = selectedMap[options[i]] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
+                    end
+                end
+
+                mdData.updateBarText = function()
+                    local names = {}
+                    for _, optName in ipairs(options) do
+                        if selectedMap[optName] then names[#names+1] = optName end
+                    end
+                    if #names == 0 then mdBarText.Text = "None"
+                    else
+                        local full = table.concat(names, ", ")
+                        if #full > 30 then mdBarText.Text = full:sub(1, 27) .. "..."
+                        else mdBarText.Text = full end
+                    end
+                end
+
+                mdData.updateBarText()
+                allMultiDropdowns[#allMultiDropdowns+1] = mdData
+                advanceY(40)
+
+                local mdRet = {}
+                mdRet.Get = function()
                     local sel = {}
                     for _, optName in ipairs(options) do
                         if selectedMap[optName] then sel[#sel+1] = optName end
                     end
                     return sel
                 end
-
-                if isDrop then
-                    -- Dropdown mode (popup)
-                    local mdLabel = newText()
-                    mdLabel.Visible = vis; mdLabel.Transparency = 1; mdLabel.ZIndex = 360
-                    mdLabel.Color = Color3.fromHex("#FFFFFF")
-                    mdLabel.Position = panelPos + Vector2.new(10, y)
-                    mdLabel.Text = o.Name or "MultiSelect"; mdLabel.Size = 12; mdLabel.Center = false
-                    mdLabel.Outline = true; mdLabel.Font = Drawing.Fonts.Monospace
-
-                    local mdBar = Drawing.new("Square")
-                    mdBar.Visible = vis; mdBar.Transparency = 1; mdBar.ZIndex = 360
-                    mdBar.Color = Color3.fromHex("#0a0a0a")
-                    mdBar.Position = panelPos + Vector2.new(10, y + 15)
-                    mdBar.Size = Vector2.new(240, 20); mdBar.Filled = true; mdBar.Corner = 6
-
-                    local mdBarBorder = Drawing.new("Square")
-                    mdBarBorder.Visible = vis; mdBarBorder.Transparency = 1; mdBarBorder.ZIndex = 361
-                    mdBarBorder.Color = Color3.fromHex("#282828"); mdBarBorder.Filled = false; mdBarBorder.Thickness = 1
-                    mdBarBorder.Position = mdBar.Position; mdBarBorder.Size = mdBar.Size; mdBarBorder.Corner = 6
-
-                    local mdBarText = newText()
-                    mdBarText.Visible = vis; mdBarText.Transparency = 1; mdBarText.ZIndex = 370
-                    mdBarText.Color = Color3.fromHex("#646464")
-                    mdBarText.Position = mdBar.Position + Vector2.new(10, 3)
-                    mdBarText.Text = "None"; mdBarText.Size = 12; mdBarText.Center = false
-                    mdBarText.Outline = true; mdBarText.Font = Drawing.Fonts.Monospace
-
-                    local mdArrow = newText()
-                    mdArrow.Visible = vis; mdArrow.Transparency = 1; mdArrow.ZIndex = 370
-                    mdArrow.Color = Color3.fromHex("#FFFFFF")
-                    mdArrow.Position = mdBar.Position + Vector2.new(225, 3)
-                    mdArrow.Text = "V"; mdArrow.Size = 12; mdArrow.Center = false
-                    mdArrow.Outline = true; mdArrow.Font = Drawing.Fonts.Monospace
-
-                    local mdDrop = Drawing.new("Square")
-                    mdDrop.Visible = false; mdDrop.Transparency = 1; mdDrop.ZIndex = 450
-                    mdDrop.Color = Color3.fromHex("#0a0a0a")
-                    mdDrop.Position = mdBar.Position + Vector2.new(0, 25)
-                    mdDrop.Size = Vector2.new(240, #options * 15 + 15); mdDrop.Filled = true; mdDrop.Corner = 6
-
-                    local mdDropBorder = Drawing.new("Square")
-                    mdDropBorder.Visible = false; mdDropBorder.Transparency = 1; mdDropBorder.ZIndex = 451
-                    mdDropBorder.Color = Color3.fromHex("#282828"); mdDropBorder.Filled = false; mdDropBorder.Thickness = 1
-                    mdDropBorder.Position = mdDrop.Position; mdDropBorder.Size = mdDrop.Size; mdDropBorder.Corner = 6
-
-                    local optTexts = {}
-                    for i, optName in ipairs(options) do
-                        local ot = newText()
-                        ot.Visible = false; ot.Transparency = 1; ot.ZIndex = 460
-                        ot.Color = selectedMap[optName] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        ot.Position = mdDrop.Position + Vector2.new(10, 8 + (i - 1) * 15)
-                        ot.Text = optName; ot.Size = 12; ot.Center = false
-                        ot.Outline = true; ot.Font = Drawing.Fonts.Monospace
-                        optTexts[i] = ot
-                    end
-
-                    for _, el in ipairs({mdLabel, mdBar, mdBarBorder, mdBarText, mdArrow}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-
-                    local mdData = {
-                        isOpen = false, selectedMap = selectedMap, options = options,
-                        bar = mdBar, drop = mdDrop, dropBorder = mdDropBorder,
-                        barText = mdBarText, optTexts = optTexts, arrow = mdArrow,
-                        label = mdLabel, barBorder = mdBarBorder,
-                        panel = panel, yOffset = y, callback = callback,
-                    }
-
-                    mdData.setOpen = function(show)
-                        if show then
-                            mdDrop.Position = mdBar.Position + Vector2.new(0, 25)
-                            mdDropBorder.Position = mdDrop.Position
-                            mdDropBorder.Size = mdDrop.Size
-                            for i, ot in ipairs(optTexts) do
-                                ot.Position = mdDrop.Position + Vector2.new(10, 8 + (i - 1) * 15)
-                            end
-                        end
-                        mdData.isOpen = show
-                        mdDrop.Visible = show; mdDropBorder.Visible = show
-                        for _, ot in ipairs(optTexts) do ot.Visible = show end
-                    end
-
-                    mdData.updateColors = function()
-                        for i, ot in ipairs(optTexts) do
-                            ot.Color = selectedMap[options[i]] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        end
-                    end
-
-                    mdData.updateBarText = function()
-                        local names = getSelected()
-                        if #names == 0 then mdBarText.Text = "None"
-                        else
-                            local full = table.concat(names, ", ")
-                            if #full > 30 then mdBarText.Text = full:sub(1, 27) .. "..."
-                            else mdBarText.Text = full end
-                        end
-                    end
-
-                    mdData.updateBarText()
-                    allMultiDropdowns[#allMultiDropdowns+1] = mdData
-                    advanceY(40)
-
-                    local mdRet = {}
-                    mdRet.Get = function() return getSelected() end
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Multi",
-                        get = function() return getSelected() end,
-                        set = function(v)
-                            if type(v) ~= "table" then return end
-                            for _, opt in ipairs(options) do selectedMap[opt] = false end
-                            for _, sel in ipairs(v) do selectedMap[sel] = true end
-                            mdData.updateColors(); mdData.updateBarText()
-                        end,
-                    }
-                    return mdRet
-                else
-                    -- Inline multi-select list
-                    local msLabel = newText()
-                    msLabel.Visible = vis; msLabel.Transparency = 1; msLabel.ZIndex = 360
-                    msLabel.Color = Color3.fromHex("#FFFFFF")
-                    msLabel.Position = panelPos + Vector2.new(10, y)
-                    msLabel.Text = o.Name or "MultiSelect"; msLabel.Size = 12; msLabel.Center = false
-                    msLabel.Outline = true; msLabel.Font = Drawing.Fonts.Monospace
-
-                    local msBox = Drawing.new("Square")
-                    msBox.Visible = vis; msBox.Transparency = 1; msBox.ZIndex = 360
-                    msBox.Color = Color3.fromHex("#0a0a0a")
-                    msBox.Position = panelPos + Vector2.new(10, y + 15)
-                    msBox.Size = Vector2.new(240, #options * 15 + 15); msBox.Filled = true; msBox.Corner = 6
-
-                    local msBoxBorder = Drawing.new("Square")
-                    msBoxBorder.Visible = vis; msBoxBorder.Transparency = 1; msBoxBorder.ZIndex = 361
-                    msBoxBorder.Color = Color3.fromHex("#282828"); msBoxBorder.Filled = false; msBoxBorder.Thickness = 1
-                    msBoxBorder.Position = msBox.Position; msBoxBorder.Size = msBox.Size; msBoxBorder.Corner = 6
-
-                    local optTexts = {}
-                    for i, optName in ipairs(options) do
-                        local ot = newText()
-                        ot.Visible = vis; ot.Transparency = 1; ot.ZIndex = 370
-                        ot.Color = selectedMap[optName] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        ot.Position = msBox.Position + Vector2.new(10, 8 + (i - 1) * 15)
-                        ot.Text = optName; ot.Size = 12; ot.Center = false
-                        ot.Outline = true; ot.Font = Drawing.Fonts.Monospace
-                        optTexts[i] = ot
-                    end
-
-                    for _, el in ipairs({msLabel, msBox, msBoxBorder}) do
-                        tabData.elements[#tabData.elements+1] = el
-                    end
-                    for _, ot in ipairs(optTexts) do tabData.elements[#tabData.elements+1] = ot end
-
-                    local msData = {
-                        selectedMap = selectedMap, options = options, optTexts = optTexts,
-                        box = msBox, boxBorder = msBoxBorder, label = msLabel,
-                        panel = panel, yOffset = y, callback = callback,
-                    }
-
-                    msData.updateColors = function()
-                        for i, ot in ipairs(optTexts) do
-                            ot.Color = selectedMap[options[i]] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        end
-                    end
-
-                    allMultiSelects[#allMultiSelects+1] = msData
-                    advanceY(#options * 15 + 35 + 5)
-
-                    local msRet = {}
-                    msRet.Get = function() return getSelected() end
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Multi",
-                        get = function() return getSelected() end,
-                        set = function(v)
-                            if type(v) ~= "table" then return end
-                            for _, opt in ipairs(options) do selectedMap[opt] = false end
-                            for _, sel in ipairs(v) do selectedMap[sel] = true end
-                            msData.updateColors()
-                        end,
-                    }
-                    return msRet
-                end
+                return mdRet
             end
             tabData.sections[sectionIndex] = Section
             return Section
@@ -2103,15 +1528,9 @@ function Library:CreateWindow(opts)
         if menuOpen then
             switchTab(activeTab)
             if hotkeyListOn then toggleHotkeyList(true) end
-            for _, ip in ipairs(allInfoPanels) do
-                if ip.visible then ip.setDrawingsVisible(true) end
-            end
         else
             closeAllPopups()
             dragging = nil
-            for _, ip in ipairs(allInfoPanels) do
-                ip.setDrawingsVisible(false)
-            end
         end
     end
 
@@ -2142,7 +1561,7 @@ function Library:CreateWindow(opts)
             for i, tl in ipairs(tabLabels) do
                 if i ~= activeTab then
                     local tp = tl.Position
-                    local tw = #tl.Text * (charW + 0.5)
+                    local tw = #tl.Text * 7
                     if isInside(mPos, tp, Vector2.new(tw, 14)) then
                         tl.Color = Color3.fromHex("#969696")
                         if pressed then switchTab(i) end
@@ -2152,10 +1571,9 @@ function Library:CreateWindow(opts)
                 end
             end
 
-            -- Keybind listening (skip when config input is active)
-            local cfgInputActive = cfgState and cfgState.getInputActive()
+            -- Keybind listening
             for _, kb in ipairs(allKeybinds) do
-                if kb.listening and not cfgInputActive then
+                if kb.listening then
                     for code, name in pairs(KeyNames) do
                         if code ~= 1 and iskeypressed(code) then
                             if code == 27 or code == 8 then
@@ -2164,10 +1582,6 @@ function Library:CreateWindow(opts)
                             else
                                 kb.key = code
                                 kb.bindText.Text = "[" .. name .. "]"
-                            end
-                            if kb.menuBind then
-                                menuKey = kb.key or 35
-                                lastMenuKey = true -- prevent immediate toggle
                             end
                             kb.bindText.Position = Vector2.new(rightAlignX(kb.bindText.Text, kb.panel.Position, kb.panel.Size.X), kb.panel.Position.Y + kb.yPos)
                             kb.listening = false
@@ -2178,69 +1592,9 @@ function Library:CreateWindow(opts)
                 end
             end
 
-            -- Config text input
-            if cfgState and activeTab == cfgState.tabIndex and cfgState.getInputActive() then
-                local lk = cfgState.lastKeys
-                -- A-Z
-                for code = 65, 90 do
-                    local down = iskeypressed(code)
-                    if down and not lk[code] then
-                        local ch = string.char(code)
-                        if not iskeypressed(16) then ch = ch:lower() end
-                        cfgState.setInputText(cfgState.getInputText() .. ch)
-                        cfgState.updateInputDisplay()
-                    end
-                    lk[code] = down
-                end
-                -- 0-9
-                for code = 48, 57 do
-                    local down = iskeypressed(code)
-                    if down and not lk[code] then
-                        cfgState.setInputText(cfgState.getInputText() .. string.char(code))
-                        cfgState.updateInputDisplay()
-                    end
-                    lk[code] = down
-                end
-                -- Space
-                local spDown = iskeypressed(32)
-                if spDown and not lk[32] then
-                    cfgState.setInputText(cfgState.getInputText() .. " ")
-                    cfgState.updateInputDisplay()
-                end
-                lk[32] = spDown
-                -- Backspace
-                local bsDown = iskeypressed(8)
-                if bsDown and not lk[8] then
-                    local t = cfgState.getInputText()
-                    if #t > 0 then cfgState.setInputText(t:sub(1, -2)); cfgState.updateInputDisplay() end
-                end
-                lk[8] = bsDown
-                -- Enter: create new config
-                local enDown = iskeypressed(13)
-                if enDown and not lk[13] then
-                    local t = cfgState.getInputText()
-                    if #t > 0 then
-                        cfgState.saveConfig(t)
-                        cfgState.setInputText("")
-                        cfgState.setInputActive(false)
-                        cfgState.refreshList()
-                        cfgState.updateInputDisplay()
-                    end
-                end
-                lk[13] = enDown
-                -- Escape
-                local escDown = iskeypressed(27)
-                if escDown and not lk[27] then
-                    cfgState.setInputText("")
-                    cfgState.setInputActive(false)
-                    cfgState.updateInputDisplay()
-                end
-                lk[27] = escDown
-            end
-
             -- Dropdown hover
             for _, dd in ipairs(allDropdowns) do
-                if dd.isOpen and dd.bar.Visible then
+                if dd.isOpen then
                     for i, ot in ipairs(dd.optTexts) do
                         if isInside(mPos, ot.Position, Vector2.new(220, 15)) then
                             if dd.options[i] ~= dd.selected then ot.Color = Color3.fromHex("#969696") end
@@ -2251,35 +1605,20 @@ function Library:CreateWindow(opts)
                 end
             end
 
-            -- Select hover (only visible)
+            -- Select hover
             for _, ss in ipairs(allSelects) do
                 for i, ot in ipairs(ss.optTexts) do
-                    if ot.Visible then
-                        if isInside(mPos, ot.Position, Vector2.new(220, 15)) then
-                            if ss.options[i] ~= ss.selected then ot.Color = Color3.fromHex("#969696") end
-                        else
-                            ot.Color = (ss.options[i] == ss.selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        end
-                    end
-                end
-            end
-
-            -- MultiSelect inline hover (only visible)
-            for _, ms in ipairs(allMultiSelects) do
-                for i, ot in ipairs(ms.optTexts) do
-                    if ot.Visible then
-                        if isInside(mPos, ot.Position, Vector2.new(220, 15)) then
-                            if not ms.selectedMap[ms.options[i]] then ot.Color = Color3.fromHex("#969696") end
-                        else
-                            ot.Color = ms.selectedMap[ms.options[i]] and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
-                        end
+                    if isInside(mPos, ot.Position, Vector2.new(220, 15)) then
+                        if ss.options[i] ~= ss.selected then ot.Color = Color3.fromHex("#969696") end
+                    else
+                        ot.Color = (ss.options[i] == ss.selected) and Color3.fromHex("#FFFFFF") or Color3.fromHex("#505050")
                     end
                 end
             end
 
             -- MultiDropdown hover
             for _, md in ipairs(allMultiDropdowns) do
-                if md.isOpen and md.bar.Visible then
+                if md.isOpen then
                     for i, ot in ipairs(md.optTexts) do
                         if isInside(mPos, ot.Position, Vector2.new(220, 15)) then
                             if not md.selectedMap[md.options[i]] then ot.Color = Color3.fromHex("#969696") end
@@ -2308,8 +1647,8 @@ function Library:CreateWindow(opts)
             if rightPressed then
                 local rcHandled = false
                 for _, kb in ipairs(allKeybinds) do
-                    if kb.rcEnabled and kb.bindText.Visible then
-                        local bw = #kb.bindText.Text * (charW + 0.5)
+                    if kb.rcEnabled then
+                        local bw = #kb.bindText.Text * 7
                         if isInside(mPos, kb.bindText.Position, Vector2.new(bw, 14)) then
                             showRCMenu(mPos, kb)
                             rcHandled = true
@@ -2374,19 +1713,19 @@ function Library:CreateWindow(opts)
                     clickConsumed = true
                 end
 
-                -- Colorpicker clicks (only match visible)
+                -- Colorpicker clicks
                 if not clickConsumed then
                     for _, cp in ipairs(allColorpickers) do
-                        if cp.box.Visible and cp.handleClick(mPos, true) then
+                        if cp.handleClick(mPos, true) then
                             clickConsumed = true; break
                         end
                     end
                 end
 
-                -- Dropdown clicks (only match visible)
+                -- Dropdown clicks
                 if not clickConsumed then
                     for _, dd in ipairs(allDropdowns) do
-                        if dd.bar.Visible and isInside(mPos, dd.bar.Position, dd.bar.Size) then
+                        if isInside(mPos, dd.bar.Position, dd.bar.Size) then
                             dd.setOpen(not dd.isOpen)
                             clickConsumed = true; break
                         elseif dd.isOpen then
@@ -2411,10 +1750,10 @@ function Library:CreateWindow(opts)
                     end
                 end
 
-                -- MultiDropdown clicks (only match visible)
+                -- MultiDropdown clicks
                 if not clickConsumed then
                     for _, md in ipairs(allMultiDropdowns) do
-                        if md.bar.Visible and isInside(mPos, md.bar.Position, md.bar.Size) then
+                        if isInside(mPos, md.bar.Position, md.bar.Size) then
                             md.setOpen(not md.isOpen)
                             clickConsumed = true; break
                         elseif md.isOpen then
@@ -2444,53 +1783,37 @@ function Library:CreateWindow(opts)
                 end
 
                 if not clickConsumed then
-                    -- Keybind clicks (start listening, only match visible)
+                    -- Keybind clicks (start listening)
                     for _, kb in ipairs(allKeybinds) do
-                        local bw = #kb.bindText.Text * (charW + 0.5)
-                        if kb.bindText.Visible and isInside(mPos, kb.bindText.Position, Vector2.new(bw, 14)) then
+                        local bw = #kb.bindText.Text * 7
+                        if isInside(mPos, kb.bindText.Position, Vector2.new(bw, 14)) then
                             kb.listening = true
                             kb.bindText.Text = "[...]"
                             kb.bindText.Position = Vector2.new(rightAlignX(kb.bindText.Text, kb.panel.Position, kb.panel.Size.X), kb.panel.Position.Y + kb.yPos)
                         end
                     end
 
-                    -- Toggle clicks (only match visible/active tab)
+                    -- Toggle clicks
                     for _, tg in ipairs(allToggles) do
-                        if tg.box.Visible and isInside(mPos, tg.box.Position, tg.box.Size) then
+                        if isInside(mPos, tg.box.Position, tg.box.Size) then
                             tg.onClick()
                         end
                     end
 
-                    -- Colorpicker toggle clicks (checkbox part, only match visible)
+                    -- Colorpicker toggle clicks (checkbox part)
                     for _, cp in ipairs(allColorpickers) do
-                        if cp.hasToggle and cp.box.Visible and isInside(mPos, cp.box.Position, cp.box.Size) then
+                        if isInside(mPos, cp.box.Position, cp.box.Size) then
                             cp.onClick()
                         end
                     end
 
-                    -- Select clicks (only match visible)
+                    -- Select clicks
                     for _, ss in ipairs(allSelects) do
                         for i, ot in ipairs(ss.optTexts) do
-                            if ot.Visible and isInside(mPos, ot.Position, Vector2.new(220, 15)) then
+                            if isInside(mPos, ot.Position, Vector2.new(220, 15)) then
                                 ss.selected = ss.options[i]
                                 ss.updateColors()
                                 ss.callback(ss.selected)
-                                break
-                            end
-                        end
-                    end
-
-                    -- MultiSelect inline clicks (only match visible)
-                    for _, ms in ipairs(allMultiSelects) do
-                        for i, ot in ipairs(ms.optTexts) do
-                            if ot.Visible and isInside(mPos, ot.Position, Vector2.new(220, 15)) then
-                                ms.selectedMap[ms.options[i]] = not ms.selectedMap[ms.options[i]]
-                                ms.updateColors()
-                                local sel = {}
-                                for _, optName in ipairs(ms.options) do
-                                    if ms.selectedMap[optName] then sel[#sel+1] = optName end
-                                end
-                                ms.callback(sel)
                                 break
                             end
                         end
@@ -2501,112 +1824,46 @@ function Library:CreateWindow(opts)
                         hkDragging = true; hkDragStart = mPos; hkStartPos = HotkeyBG.Position
                     end
 
-                    -- Info panel drag
-                    for _, ip in ipairs(allInfoPanels) do
-                        if ip.visible and isInside(mPos, ip.titleBG.Position, ip.titleBG.Size) then
-                            ip.dragging = true; ip.dragStart = mPos; ip.startPos = ip.bg.Position
-                        end
-                    end
-
-                    -- Slider clicks (only match visible/active tab sliders)
+                    -- Slider clicks
                     for _, sd in ipairs(allSliders) do
-                        if sd.bar.Visible then
-                            if isInside(mPos, sd.bar.Position, sd.bar.Size) then
-                                sliderDrag = "slider"; sliderDragData = sd
-                                local sx = math.clamp((mPos.X - sd.bar.Position.X) / 215, 0, 1)
-                                sd.val = sd.min + sx * (sd.max - sd.min)
-                                sd.update(); sd.callback(sd.val)
-                                break
-                            elseif isInside(mPos, sd.minus.Position, Vector2.new(10, 14)) then
-                                sd.val = math.clamp(sd.val - sd.step, sd.min, sd.max)
-                                sd.update(); sd.callback(sd.val)
-                                break
-                            elseif isInside(mPos, sd.plus.Position, Vector2.new(10, 14)) then
-                                sd.val = math.clamp(sd.val + sd.step, sd.min, sd.max)
-                                sd.update(); sd.callback(sd.val)
-                                break
-                            end
+                        if isInside(mPos, sd.bar.Position, sd.bar.Size) then
+                            sliderDrag = "slider"; sliderDragData = sd
+                            local sx = math.clamp((mPos.X - sd.bar.Position.X) / 215, 0, 1)
+                            sd.val = sd.min + sx * (sd.max - sd.min)
+                            sd.update(); sd.callback(sd.val)
+                        elseif isInside(mPos, sd.minus.Position, Vector2.new(10, 14)) then
+                            sd.val = math.clamp(sd.val - 10, sd.min, sd.max)
+                            sd.update(); sd.callback(sd.val)
+                        elseif isInside(mPos, sd.plus.Position, Vector2.new(10, 14)) then
+                            sd.val = math.clamp(sd.val + 10, sd.min, sd.max)
+                            sd.update(); sd.callback(sd.val)
                         end
                     end
 
-                    -- Range slider clicks (only match visible/active tab sliders)
+                    -- Range slider clicks
                     for _, rd in ipairs(allRangeSliders) do
-                        if rd.bar.Visible then
-                            if isInside(mPos, rd.bar.Position, rd.bar.Size) then
-                                local sx = math.clamp((mPos.X - rd.bar.Position.X) / 215, 0, 1)
-                                local clickVal = rd.min + sx * (rd.max - rd.min)
-                                if math.abs(clickVal - rd.left) <= math.abs(clickVal - rd.right) then
-                                    sliderDrag = "rangeleft"; sliderDragData = rd
-                                    rd.left = math.clamp(clickVal, rd.min, rd.right - 10)
-                                else
-                                    sliderDrag = "rangeright"; sliderDragData = rd
-                                    rd.right = math.clamp(clickVal, rd.left + 10, rd.max)
-                                end
-                                rd.update(); rd.callback(rd.left, rd.right)
-                                break
-                            elseif isInside(mPos, rd.minus.Position, Vector2.new(10, 14)) then
-                                rd.left = math.clamp(rd.left - rd.step, rd.min, rd.right - 10)
-                                rd.update(); rd.callback(rd.left, rd.right)
-                                break
-                            elseif isInside(mPos, rd.plus.Position, Vector2.new(10, 14)) then
-                                rd.right = math.clamp(rd.right + rd.step, rd.left + 10, rd.max)
-                                rd.update(); rd.callback(rd.left, rd.right)
-                                break
+                        if isInside(mPos, rd.bar.Position, rd.bar.Size) then
+                            local sx = math.clamp((mPos.X - rd.bar.Position.X) / 215, 0, 1)
+                            local clickVal = rd.min + sx * (rd.max - rd.min)
+                            if math.abs(clickVal - rd.left) <= math.abs(clickVal - rd.right) then
+                                sliderDrag = "rangeleft"; sliderDragData = rd
+                                rd.left = math.clamp(clickVal, rd.min, rd.right - 10)
+                            else
+                                sliderDrag = "rangeright"; sliderDragData = rd
+                                rd.right = math.clamp(clickVal, rd.left + 10, rd.max)
                             end
-                        end
-                    end
-
-                    -- Config tab clicks
-                    if cfgState and activeTab == cfgState.tabIndex then
-                        if isInside(mPos, cfgState.inputBox.Position, cfgState.inputBox.Size) then
-                            cfgState.setInputActive(true)
-                            cfgState.updateInputDisplay()
-                            clickConsumed = true
-                        elseif isInside(mPos, cfgState.saveBtn.Position, cfgState.saveBtn.Size) then
-                            local names = cfgState.getNames()
-                            local name = names[cfgState.getSelectedIdx()]
-                            if name then cfgState.saveConfig(name) end
-                            cfgState.setInputActive(false); cfgState.updateInputDisplay()
-                            clickConsumed = true
-                        elseif isInside(mPos, cfgState.loadBtn.Position, cfgState.loadBtn.Size) then
-                            local names = cfgState.getNames()
-                            local name = names[cfgState.getSelectedIdx()]
-                            if name then cfgState.loadConfig(name) end
-                            cfgState.setInputActive(false); cfgState.updateInputDisplay()
-                            clickConsumed = true
-                        elseif isInside(mPos, cfgState.listBox.Position, cfgState.listBox.Size) then
-                            -- Check X delete button on selected entry first
-                            local selIdx = cfgState.getSelectedIdx()
-                            local names = cfgState.getNames()
-                            local xClicked = false
-                            if selIdx >= 1 and selIdx <= #names and selIdx <= 7 then
-                                local xBtn = cfgState.entryPool[selIdx].xBtn
-                                if xBtn.Visible and isInside(mPos, xBtn.Position, Vector2.new(12, 14)) then
-                                    cfgState.deleteConfig(names[selIdx])
-                                    cfgState.refreshList()
-                                    xClicked = true
-                                end
-                            end
-                            if not xClicked then
-                                local relY = mPos.Y - cfgState.listBox.Position.Y - 5
-                                local idx = math.floor(relY / 22) + 1
-                                if idx >= 1 and idx <= #names then
-                                    cfgState.setSelectedIdx(idx)
-                                    cfgState.refreshList()
-                                end
-                            end
-                            cfgState.setInputActive(false); cfgState.updateInputDisplay()
-                            clickConsumed = true
-                        else
-                            if cfgState.getInputActive() then
-                                cfgState.setInputActive(false); cfgState.updateInputDisplay()
-                            end
+                            rd.update(); rd.callback(rd.left, rd.right)
+                        elseif isInside(mPos, rd.minus.Position, Vector2.new(10, 14)) then
+                            rd.left = math.clamp(rd.left - 1, rd.min, rd.right - 10)
+                            rd.update(); rd.callback(rd.left, rd.right)
+                        elseif isInside(mPos, rd.plus.Position, Vector2.new(10, 14)) then
+                            rd.right = math.clamp(rd.right + 1, rd.left + 10, rd.max)
+                            rd.update(); rd.callback(rd.left, rd.right)
                         end
                     end
 
                     -- Title bar drag
                     if isInside(mPos, Title1.Position, Title1.Size) then
-                        closeAllPopups()
                         dragging = BG; dragStart = mPos; startBGPos = BG.Position
                     end
                 end -- not clickConsumed
@@ -2617,7 +1874,6 @@ function Library:CreateWindow(opts)
                 dragging = nil
                 sliderDrag = nil; sliderDragData = nil
                 hkDragging = false
-                for _, ip in ipairs(allInfoPanels) do ip.dragging = false end
                 for _, cp in ipairs(allColorpickers) do cp.cpDrag = nil end
             end
 
@@ -2632,12 +1888,12 @@ function Library:CreateWindow(opts)
 
                 -- Tab labels
                 for i, tl in ipairs(tabLabels) do
-                    local xOff = tabXOffsets[i] or 0
+                    local xOff = tabXOffsets[i] or (tabXOffsets[#tabXOffsets] + (i - #tabXOffsets) * 60)
                     tl.Position = newPos + Vector2.new(xOff + 2, 10)
                 end
 
                 -- Panels and their contents
-                for j, tabData in ipairs(tabs) do
+                for _, tabData in ipairs(tabs) do
                     local p1 = tabData.panel1
                     local p2 = tabData.panel2
                     local oldP1 = p1.Position
@@ -2648,49 +1904,18 @@ function Library:CreateWindow(opts)
 
                     p1.Position = newP1
                     p2.Position = newP2
-                    tabData.panel1Border.Position = newP1; tabData.panel1Border.Size = p1.Size
-                    tabData.panel2Border.Position = newP2; tabData.panel2Border.Size = p2.Size
                     tabData.panelText1.Position = newP1 + Vector2.new(20, -5)
                     tabData.panelText2.Position = newP1 + Vector2.new(290, -5)
 
-                    -- Sub-panels
-                    local p3 = tabData.panel3
-                    local p4 = tabData.panel4
-                    local oldP3, oldP4
-                    if p3 then
-                        oldP3 = p3.Position
-                        local newP3 = newP1 + Vector2.new(0, tabData.panel1Height + 10)
-                        p3.Position = newP3
-                        tabData.panel3Border.Position = newP3
-                        tabData.panelText3.Position = newP3 + Vector2.new(20, -5)
-                    end
-                    if p4 then
-                        oldP4 = p4.Position
-                        local newP4 = newP2 + Vector2.new(0, tabData.panel2Height + 10)
-                        p4.Position = newP4
-                        tabData.panel4Border.Position = newP4
-                        tabData.panelText4.Position = newP4 + Vector2.new(20, -5)
-                    end
-
                     -- Move all elements by delta based on which panel they belong to
-                    local skipSet = {[p1]=true, [p2]=true, [tabData.panelText1]=true, [tabData.panelText2]=true,
-                        [tabData.panel1Border]=true, [tabData.panel2Border]=true}
-                    if p3 then skipSet[p3]=true; skipSet[tabData.panel3Border]=true; skipSet[tabData.panelText3]=true end
-                    if p4 then skipSet[p4]=true; skipSet[tabData.panel4Border]=true; skipSet[tabData.panelText4]=true end
-
                     for _, el in ipairs(tabData.elements) do
-                        if not skipSet[el] and el.Position then
-                            -- Determine which panel this element belongs to by X and Y
-                            local isRight = math.abs(el.Position.X - oldP1.X) > math.abs(el.Position.X - (oldP1.X + 270))
-                            if isRight then
-                                if p4 and oldP4 and el.Position.Y >= oldP4.Y then
-                                    el.Position = el.Position + (p4.Position - oldP4)
-                                else
+                        if el ~= p1 and el ~= p2 and el ~= tabData.panelText1 and el ~= tabData.panelText2 then
+                            -- Determine which panel this element is closer to
+                            if el.Position then
+                                local distP1 = math.abs(el.Position.X - oldP1.X)
+                                local distP2 = math.abs(el.Position.X - (oldP1.X + 270))
+                                if distP2 < distP1 then
                                     el.Position = el.Position + deltaP2
-                                end
-                            else
-                                if p3 and oldP3 and el.Position.Y >= oldP3.Y then
-                                    el.Position = el.Position + (p3.Position - oldP3)
                                 else
                                     el.Position = el.Position + deltaP1
                                 end
@@ -2698,18 +1923,17 @@ function Library:CreateWindow(opts)
                         end
                     end
 
-                    -- Update slider/range slider positions (only call update for active tab to avoid re-showing hidden fills)
-                    local isActive = (j == activeTab)
+                    -- Update slider/range slider positions
                     for _, sd in ipairs(tabData.sliders) do
                         sd.bar.Position = sd.panel.Position + Vector2.new(20, sd.yOffset + 15)
                         sd.barBorder.Position = sd.bar.Position
                         sd.fill.Position = sd.bar.Position
-                        if isActive then sd.update() end
+                        sd.update()
                     end
                     for _, rd in ipairs(tabData.rangeSliders) do
                         rd.bar.Position = rd.panel.Position + Vector2.new(20, rd.yOffset + 15)
                         rd.barBorder.Position = rd.bar.Position
-                        if isActive then rd.update() end
+                        rd.update()
                     end
                 end
 
@@ -2733,15 +1957,6 @@ function Library:CreateWindow(opts)
                 local delta = mPos - hkDragStart
                 HotkeyBG.Position = hkStartPos + delta
                 updateHKPositions()
-            end
-
-            -- Info panel dragging
-            for _, ip in ipairs(allInfoPanels) do
-                if ip.dragging and mouse1 then
-                    local delta = mPos - ip.dragStart
-                    ip.bg.Position = ip.startPos + delta
-                    ip.updatePositions()
-                end
             end
 
             end -- menuOpen
@@ -2775,328 +1990,7 @@ function Library:CreateWindow(opts)
         end
     end
     end
-    function Window:AddConfigTab()
-        local HttpService = game:GetService("HttpService")
-        local Tab = Window:AddTab("Config")
-        local CfgLeft = Tab:AddSection("Config")
-        local CfgRight = Tab:AddSection("Options")
-
-        -- Config directory
-        local configDir = configPath
-        if gameName ~= "" then configDir = configDir .. "\\" .. gameName end
-
-        -- Create folders
-        pcall(function()
-            local parts = {}
-            for part in configDir:gmatch("[^\\]+") do parts[#parts+1] = part end
-            local path = ""
-            for _, part in ipairs(parts) do
-                path = path == "" and part or (path .. "\\" .. part)
-                if not isfolder(path) then makefolder(path) end
-            end
-        end)
-
-        -- Left panel: config UI
-        local p = CfgLeft._panel
-        local td = CfgLeft._tabData
-        local ti = CfgLeft._tabIndex
-        local vis = (ti == activeTab)
-        local baseY = td.panel1Y
-
-        -- Config list box
-        local listBox = Drawing.new("Square")
-        listBox.Visible = vis; listBox.Transparency = 1; listBox.ZIndex = 130
-        listBox.Color = Color3.fromHex("#050505")
-        listBox.Position = p.Position + Vector2.new(10, baseY)
-        listBox.Size = Vector2.new(240, 160); listBox.Filled = true; listBox.Corner = 6
-
-        local listBoxBorder = Drawing.new("Square")
-        listBoxBorder.Visible = vis; listBoxBorder.Transparency = 1; listBoxBorder.ZIndex = 131
-        listBoxBorder.Color = Color3.fromHex("#282828"); listBoxBorder.Filled = false; listBoxBorder.Thickness = 1
-        listBoxBorder.Position = listBox.Position; listBoxBorder.Size = listBox.Size; listBoxBorder.Corner = 6
-
-        for _, el in ipairs({listBox, listBoxBorder}) do
-            td.elements[#td.elements+1] = el
-        end
-
-        -- Entry pool (max 7 visible entries)
-        local MAX_ENTRIES = 7
-        local entryPool = {}
-        for i = 1, MAX_ENTRIES do
-            local hl = Drawing.new("Square")
-            hl.Visible = false; hl.Transparency = 1; hl.ZIndex = 132
-            hl.Color = Color3.fromHex("#1a1a1a")
-            hl.Size = Vector2.new(230, 20); hl.Filled = true; hl.Corner = 4
-
-            local txt = newText()
-            txt.Visible = false; txt.Transparency = 1; txt.ZIndex = 140
-            txt.Color = Color3.fromHex("#FFFFFF"); txt.Size = 12; txt.Center = false
-            txt.Outline = true; txt.Font = Drawing.Fonts.Monospace
-
-            local xBtn = newText()
-            xBtn.Visible = false; xBtn.Transparency = 1; xBtn.ZIndex = 141
-            xBtn.Color = Color3.fromHex("#505050"); xBtn.Text = "X"; xBtn.Size = 12
-            xBtn.Center = false; xBtn.Outline = true; xBtn.Font = Drawing.Fonts.Monospace
-
-            entryPool[i] = {highlight = hl, text = txt, xBtn = xBtn}
-            td.elements[#td.elements+1] = hl
-            td.elements[#td.elements+1] = txt
-            td.elements[#td.elements+1] = xBtn
-        end
-
-        -- Config state
-        local cfgNames = {}
-        local selectedIdx = 1
-        local inputText = ""
-        local inputActive = false
-        local lastKeys = {}
-
-        -- List configs from disk
-        local function getConfigNames()
-            local names = {}
-            pcall(function()
-                if isfolder(configDir) then
-                    local files = listfiles(configDir)
-                    for _, f in ipairs(files) do
-                        local name = f:match("([^\\]+)%.json$")
-                        if name then names[#names+1] = name end
-                    end
-                end
-            end)
-            table.sort(names)
-            return names
-        end
-
-        -- Refresh list display
-        local function refreshList()
-            cfgNames = getConfigNames()
-            if selectedIdx > #cfgNames then selectedIdx = #cfgNames end
-            if selectedIdx < 1 then selectedIdx = 1 end
-            local isVis = (activeTab == ti)
-            for i = 1, MAX_ENTRIES do
-                local entry = entryPool[i]
-                if i <= #cfgNames then
-                    local isSel = (i == selectedIdx)
-                    entry.highlight.Visible = isVis and isSel
-                    entry.highlight.Position = listBox.Position + Vector2.new(5, 5 + (i - 1) * 22)
-                    entry.text.Visible = isVis
-                    entry.text.Text = cfgNames[i]
-                    entry.text.Position = listBox.Position + Vector2.new(10, 7 + (i - 1) * 22)
-                    entry.text.Color = isSel and Color3.fromHex("#FFFFFF") or Color3.fromHex("#808080")
-                    -- X delete button on selected entry
-                    entry.xBtn.Visible = isVis and isSel
-                    entry.xBtn.Position = listBox.Position + Vector2.new(224, 7 + (i - 1) * 22)
-                    entry.xBtn.Color = Color3.fromHex("#808080")
-                else
-                    entry.highlight.Visible = false
-                    entry.text.Visible = false
-                    entry.xBtn.Visible = false
-                end
-            end
-        end
-
-        -- Save config to file
-        local function saveConfig(name)
-            local data = {}
-            for _, w in ipairs(configWidgets) do
-                data[w.name] = w.get()
-            end
-            pcall(function()
-                writefile(configDir .. "\\" .. name .. ".json", HttpService:JSONEncode(data))
-            end)
-        end
-
-        -- Load config from file
-        local function loadConfig(name)
-            local path = configDir .. "\\" .. name .. ".json"
-            local ok, data = pcall(function()
-                return HttpService:JSONDecode(readfile(path))
-            end)
-            if not ok or type(data) ~= "table" then return end
-            for _, w in ipairs(configWidgets) do
-                if data[w.name] ~= nil then
-                    pcall(w.set, data[w.name])
-                end
-            end
-        end
-
-        -- Delete config from disk
-        local function deleteConfig(name)
-            pcall(function()
-                local path = configDir .. "\\" .. name .. ".json"
-                if isfile(path) then delfile(path) end
-            end)
-        end
-
-        -- Input box
-        local inputY = baseY + 170
-        local inputBox = Drawing.new("Square")
-        inputBox.Visible = vis; inputBox.Transparency = 1; inputBox.ZIndex = 130
-        inputBox.Color = Color3.fromHex("#050505")
-        inputBox.Position = p.Position + Vector2.new(10, inputY)
-        inputBox.Size = Vector2.new(240, 25); inputBox.Filled = true; inputBox.Corner = 6
-
-        local inputBoxBorder = Drawing.new("Square")
-        inputBoxBorder.Visible = vis; inputBoxBorder.Transparency = 1; inputBoxBorder.ZIndex = 131
-        inputBoxBorder.Color = Color3.fromHex("#282828"); inputBoxBorder.Filled = false; inputBoxBorder.Thickness = 1
-        inputBoxBorder.Position = inputBox.Position; inputBoxBorder.Size = inputBox.Size; inputBoxBorder.Corner = 6
-
-        local inputDisplay = newText()
-        inputDisplay.Visible = vis; inputDisplay.Transparency = 1; inputDisplay.ZIndex = 140
-        inputDisplay.Color = Color3.fromHex("#505050")
-        inputDisplay.Position = inputBox.Position + Vector2.new(8, 5)
-        inputDisplay.Text = "New config..."; inputDisplay.Size = 12; inputDisplay.Center = false
-        inputDisplay.Outline = true; inputDisplay.Font = Drawing.Fonts.Monospace
-
-        for _, el in ipairs({inputBox, inputBoxBorder, inputDisplay}) do
-            td.elements[#td.elements+1] = el
-        end
-
-        local function updateInputDisplay()
-            if inputActive then
-                if #inputText > 0 then
-                    inputDisplay.Text = inputText .. "|"
-                    inputDisplay.Color = Color3.fromHex("#FFFFFF")
-                else
-                    inputDisplay.Text = "|"
-                    inputDisplay.Color = Color3.fromHex("#505050")
-                end
-                inputBoxBorder.Color = Color3.fromHex("#505050")
-            else
-                if #inputText > 0 then
-                    inputDisplay.Text = inputText
-                    inputDisplay.Color = Color3.fromHex("#FFFFFF")
-                else
-                    inputDisplay.Text = "New config..."
-                    inputDisplay.Color = Color3.fromHex("#505050")
-                end
-                inputBoxBorder.Color = Color3.fromHex("#282828")
-            end
-        end
-
-        -- Save / Load buttons (aligned with input bar)
-        local btnY = inputY + 35
-        local saveBtn = Drawing.new("Square")
-        saveBtn.Visible = vis; saveBtn.Transparency = 1; saveBtn.ZIndex = 130
-        saveBtn.Color = Color3.fromHex("#050505")
-        saveBtn.Position = p.Position + Vector2.new(10, btnY)
-        saveBtn.Size = Vector2.new(117, 25); saveBtn.Filled = true; saveBtn.Corner = 6
-
-        local saveBtnBorder = Drawing.new("Square")
-        saveBtnBorder.Visible = vis; saveBtnBorder.Transparency = 1; saveBtnBorder.ZIndex = 131
-        saveBtnBorder.Color = Color3.fromHex("#282828"); saveBtnBorder.Filled = false; saveBtnBorder.Thickness = 1
-        saveBtnBorder.Position = saveBtn.Position; saveBtnBorder.Size = saveBtn.Size; saveBtnBorder.Corner = 6
-
-        local saveBtnText = newText()
-        saveBtnText.Visible = vis; saveBtnText.Transparency = 1; saveBtnText.ZIndex = 140
-        saveBtnText.Color = Color3.fromHex("#FFFFFF")
-        saveBtnText.Position = saveBtn.Position + Vector2.new(48, 5)
-        saveBtnText.Text = "Save"; saveBtnText.Size = 12; saveBtnText.Center = false
-        saveBtnText.Outline = true; saveBtnText.Font = Drawing.Fonts.Monospace
-
-        local loadBtn = Drawing.new("Square")
-        loadBtn.Visible = vis; loadBtn.Transparency = 1; loadBtn.ZIndex = 130
-        loadBtn.Color = Color3.fromHex("#050505")
-        loadBtn.Position = p.Position + Vector2.new(133, btnY)
-        loadBtn.Size = Vector2.new(117, 25); loadBtn.Filled = true; loadBtn.Corner = 6
-
-        local loadBtnBorder = Drawing.new("Square")
-        loadBtnBorder.Visible = vis; loadBtnBorder.Transparency = 1; loadBtnBorder.ZIndex = 131
-        loadBtnBorder.Color = Color3.fromHex("#282828"); loadBtnBorder.Filled = false; loadBtnBorder.Thickness = 1
-        loadBtnBorder.Position = loadBtn.Position; loadBtnBorder.Size = loadBtn.Size; loadBtnBorder.Corner = 6
-
-        local loadBtnText = newText()
-        loadBtnText.Visible = vis; loadBtnText.Transparency = 1; loadBtnText.ZIndex = 140
-        loadBtnText.Color = Color3.fromHex("#FFFFFF")
-        loadBtnText.Position = loadBtn.Position + Vector2.new(48, 5)
-        loadBtnText.Text = "Load"; loadBtnText.Size = 12; loadBtnText.Center = false
-        loadBtnText.Outline = true; loadBtnText.Font = Drawing.Fonts.Monospace
-
-        for _, el in ipairs({saveBtn, saveBtnBorder, saveBtnText, loadBtn, loadBtnBorder, loadBtnText}) do
-            td.elements[#td.elements+1] = el
-        end
-
-        -- Path label below buttons
-        local fullPath = configDir
-        local pathLabel = newText()
-        pathLabel.Visible = vis; pathLabel.Transparency = 1; pathLabel.ZIndex = 140
-        pathLabel.Color = Color3.fromHex("#505050")
-        pathLabel.Position = p.Position + Vector2.new(10, btnY + 35)
-        pathLabel.Text = fullPath; pathLabel.Size = 12; pathLabel.Center = false
-        pathLabel.Outline = true; pathLabel.Font = Drawing.Fonts.Monospace
-        td.elements[#td.elements+1] = pathLabel
-
-        -- Store config state for main loop access
-        cfgState = {
-            tabIndex = ti,
-            listBox = listBox,
-            inputBox = inputBox,
-            saveBtn = saveBtn,
-            loadBtn = loadBtn,
-            refreshList = refreshList,
-            saveConfig = saveConfig,
-            loadConfig = loadConfig,
-            deleteConfig = deleteConfig,
-            entryPool = entryPool,
-            updateInputDisplay = updateInputDisplay,
-            getInputActive = function() return inputActive end,
-            setInputActive = function(v) inputActive = v end,
-            getInputText = function() return inputText end,
-            setInputText = function(v) inputText = v end,
-            getSelectedIdx = function() return selectedIdx end,
-            setSelectedIdx = function(v) selectedIdx = v end,
-            getNames = function() return cfgNames end,
-            lastKeys = lastKeys,
-        }
-
-        -- Initial list refresh
-        refreshList()
-
-        -- Right panel: hardcoded Menu Key + Hotkey List, then return section for user widgets
-        CfgRight:AddKeybind({
-            Name = "Menu Key",
-            Default = 35,
-            Mode = "always",
-            MenuBind = true,
-        })
-
-        CfgRight:AddToggle({
-            Name = "Hotkey List",
-            Default = true,
-            Callback = function(val)
-                Window:ToggleHotkeyList(val)
-            end
-        })
-
-        local ConfigTab = {}
-        function ConfigTab:AddToggle(o) return CfgRight:AddToggle(o) end
-        function ConfigTab:AddSlider(o) return CfgRight:AddSlider(o) end
-        function ConfigTab:AddRangeSlider(o) return CfgRight:AddRangeSlider(o) end
-        function ConfigTab:AddKeybind(o) return CfgRight:AddKeybind(o) end
-        function ConfigTab:AddColorpicker(o) return CfgRight:AddColorpicker(o) end
-        function ConfigTab:AddSingle(o) return CfgRight:AddSingle(o) end
-        function ConfigTab:AddMulti(o) return CfgRight:AddMulti(o) end
-        function ConfigTab:AddLabel(o) return CfgRight:AddLabel(o) end
-        return ConfigTab
-    end
-
-    function Window:Start()
-        -- Compute tab positions: right-aligned against the right edge of the right panel
-        local gap = 15 -- gap between tab labels
-        local rightEdge = 538 -- right panel right edge (280 + 260 - 2px)
-        local totalW = 0
-        for i = #tabLabels, 1, -1 do
-            totalW = totalW + #tabLabels[i].Text * (charW + 0.5)
-            if i < #tabLabels then totalW = totalW + gap end
-        end
-        local x = rightEdge - totalW
-        for i, tl in ipairs(tabLabels) do
-            tabXOffsets[i] = x
-            tl.Position = Title1.Position + Vector2.new(x, 8)
-            x = x + #tl.Text * (charW + 0.5) + gap
-        end
-        mainLoop()
-    end
+    mainLoop()
 
     return Window
 end
