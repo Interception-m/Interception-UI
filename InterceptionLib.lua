@@ -1007,6 +1007,8 @@ function Library:CreateWindow(opts)
                 ret.Set = function(_, val)
                     toggleData.state = val
                     box.Color = val and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
+                    callback(val)
+                    if hotkeyListOn then updateHotkeyList() end
                 end
                 ret.Get = function() return toggleData.state end
                 if keybindData then
@@ -2341,19 +2343,15 @@ function Library:CreateWindow(opts)
             if cfgState and activeTab == cfgState.tabIndex then
                 local sBtn, sBdr = cfgState.saveBtn, cfgState.saveBtnBorder
                 local lBtn, lBdr = cfgState.loadBtn, cfgState.loadBtnBorder
-                if sBtn.Color ~= Color3.fromRGB(0, 180, 60) then
-                    if isInside(mPos, sBtn.Position, sBtn.Size) then
-                        sBtn.Color = Color3.fromHex("#0f0f0f"); sBdr.Color = Color3.fromHex("#3a3a3a")
-                    else
-                        sBtn.Color = Color3.fromHex("#050505"); sBdr.Color = Color3.fromHex("#282828")
-                    end
+                if isInside(mPos, sBtn.Position, sBtn.Size) then
+                    sBtn.Color = Color3.fromHex("#0f0f0f"); sBdr.Color = Color3.fromHex("#3a3a3a")
+                else
+                    sBtn.Color = Color3.fromHex("#050505"); sBdr.Color = Color3.fromHex("#282828")
                 end
-                if lBtn.Color ~= Color3.fromRGB(0, 180, 60) then
-                    if isInside(mPos, lBtn.Position, lBtn.Size) then
-                        lBtn.Color = Color3.fromHex("#0f0f0f"); lBdr.Color = Color3.fromHex("#3a3a3a")
-                    else
-                        lBtn.Color = Color3.fromHex("#050505"); lBdr.Color = Color3.fromHex("#282828")
-                    end
+                if isInside(mPos, lBtn.Position, lBtn.Size) then
+                    lBtn.Color = Color3.fromHex("#0f0f0f"); lBdr.Color = Color3.fromHex("#3a3a3a")
+                else
+                    lBtn.Color = Color3.fromHex("#050505"); lBdr.Color = Color3.fromHex("#282828")
                 end
             end
 
@@ -2620,9 +2618,9 @@ function Library:CreateWindow(opts)
                             local name = names[cfgState.getSelectedIdx()]
                             if name then
                                 cfgState.saveConfig(name)
-                                local btn, bdr = cfgState.saveBtn, cfgState.saveBtnBorder
-                                btn.Color = Color3.fromRGB(0, 180, 60); bdr.Color = Color3.fromRGB(0, 220, 80)
-                                task.spawn(function() task.wait(0.4); btn.Color = Color3.fromHex("#050505"); bdr.Color = Color3.fromHex("#282828") end)
+                                local txt = cfgState.saveBtnText
+                                txt.Color = Color3.fromRGB(0, 220, 80)
+                                task.spawn(function() task.wait(1); txt.Color = Color3.fromHex("#FFFFFF") end)
                             end
                             cfgState.setInputActive(false); cfgState.updateInputDisplay()
                             clickConsumed = true
@@ -2631,9 +2629,9 @@ function Library:CreateWindow(opts)
                             local name = names[cfgState.getSelectedIdx()]
                             if name then
                                 cfgState.loadConfig(name)
-                                local btn, bdr = cfgState.loadBtn, cfgState.loadBtnBorder
-                                btn.Color = Color3.fromRGB(0, 180, 60); bdr.Color = Color3.fromRGB(0, 220, 80)
-                                task.spawn(function() task.wait(0.4); btn.Color = Color3.fromHex("#050505"); bdr.Color = Color3.fromHex("#282828") end)
+                                local txt = cfgState.loadBtnText
+                                txt.Color = Color3.fromRGB(0, 220, 80)
+                                task.spawn(function() task.wait(1); txt.Color = Color3.fromHex("#FFFFFF") end)
                             end
                             cfgState.setInputActive(false); cfgState.updateInputDisplay()
                             clickConsumed = true
