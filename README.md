@@ -71,9 +71,18 @@ local myToggle = Section:AddToggle({
     Mode = "toggle",                 -- "hold" or "toggle" (for keybind)
 })
 
-myToggle:Get()       -- returns bool
-myToggle:Set(true)   -- sets value, fires callback
+myToggle:Get()           -- returns checkbox bool
+myToggle:Set(true)       -- sets value, fires callback
+myToggle:GetActive()     -- keybind active state (requires Keybind=true)
+myToggle:SetActive(false) -- set keybind active state
 ```
+
+When `Keybind = true`, the toggle has two states:
+- **Checkbox** (`:Get()` / `:Set()`) — the master enable
+- **Keybind active** (`:GetActive()` / `:SetActive()`) — controlled by the bound key
+
+If no keybind is set (`[None]`), `:GetActive()` follows the checkbox state.
+Right-click the keybind text to change mode (Always On / Toggle / Hold).
 
 ### Slider
 
@@ -124,8 +133,6 @@ myKeybind:GetActive()  -- returns true/false based on mode
 myKeybind:Get()        -- returns VK code
 myKeybind:Set(0x10)    -- set to Shift
 ```
-
-Right-click any keybind to change its mode (Always On / Toggle / Hold).
 
 ### Colorpicker
 
@@ -254,8 +261,11 @@ ConfigTab:AddLabel("v1.0.0")
 ### Config System
 
 - Every widget **auto-registers** for config save/load — no manual setup needed
+- Toggle+keybind combos save both the checkbox state **and** the keybind key/mode
+- Loading a config fires all widget callbacks, so game state updates immediately
 - Menu Key keybind is excluded from configs (`MenuBind = true`)
 - Configs are saved as JSON to `INTERCEPTION\<Game>\<name>.json`
+- Save/Load buttons show a **green text flash** for 1 second on success and have a **hover effect**
 - Uses: `makefolder`, `writefile`, `readfile`, `isfolder`, `listfiles`, `isfile`, `delfile`
 
 ---
@@ -335,6 +345,7 @@ Window:_toggleHotkeyList(false)  -- hide
 | Widget | Get | Set |
 |--------|-----|-----|
 | Toggle | `:Get()` → `bool` | `:Set(bool)` |
+| Toggle+Keybind | `:GetActive()` → `bool` | `:SetActive(bool)` |
 | Slider | `:Get()` → `number` | `:Set(number)` |
 | Range Slider | — | `:SetLeft(n)`, `:SetRight(n)` |
 | Keybind | `:Get()` → VK code, `:GetActive()` → `bool` | `:Set(vkCode)` |
