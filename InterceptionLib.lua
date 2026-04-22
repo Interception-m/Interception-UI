@@ -1016,11 +1016,37 @@ function Library:CreateWindow(opts)
                     ret.GetActive = function() return toggleData.state end
                     ret.SetActive = function() end
                 end
-                configWidgets[#configWidgets+1] = {
-                    name = o.Name or "Toggle",
-                    get = function() return toggleData.state end,
-                    set = function(v) ret:Set(v) end,
-                }
+                if keybindData then
+                    configWidgets[#configWidgets+1] = {
+                        name = o.Name or "Toggle",
+                        get = function() return {state = toggleData.state, key = keybindData.key, mode = keybindData.mode} end,
+                        set = function(v)
+                            if type(v) == "table" then
+                                ret:Set(v.state)
+                                if v.key ~= nil or v.mode ~= nil then
+                                    keybindData.key = v.key
+                                    if v.key and KeyNames[v.key] then
+                                        keybindData.bindText.Text = "[" .. KeyNames[v.key] .. "]"
+                                    else
+                                        keybindData.bindText.Text = "[None]"
+                                    end
+                                    keybindData.bindText.Position = Vector2.new(rightAlignX(keybindData.bindText.Text, panel.Position, panel.Size.X), panel.Position.Y + keybindData.yPos)
+                                    if v.mode then keybindData.mode = v.mode end
+                                end
+                            else
+                                ret:Set(v)
+                            end
+                        end,
+                    }
+                else
+                    configWidgets[#configWidgets+1] = {
+                        name = o.Name or "Toggle",
+                        get = function() return toggleData.state end,
+                        set = function(v)
+                            if type(v) == "table" then ret:Set(v.state) else ret:Set(v) end
+                        end,
+                    }
+                end
                 return ret
             end
 
@@ -2311,6 +2337,26 @@ function Library:CreateWindow(opts)
                 end
             end
 
+            -- Config button hover
+            if cfgState and activeTab == cfgState.tabIndex then
+                local sBtn, sBdr = cfgState.saveBtn, cfgState.saveBtnBorder
+                local lBtn, lBdr = cfgState.loadBtn, cfgState.loadBtnBorder
+                if sBtn.Color ~= Color3.fromRGB(0, 180, 60) then
+                    if isInside(mPos, sBtn.Position, sBtn.Size) then
+                        sBtn.Color = Color3.fromHex("#0f0f0f"); sBdr.Color = Color3.fromHex("#3a3a3a")
+                    else
+                        sBtn.Color = Color3.fromHex("#050505"); sBdr.Color = Color3.fromHex("#282828")
+                    end
+                end
+                if lBtn.Color ~= Color3.fromRGB(0, 180, 60) then
+                    if isInside(mPos, lBtn.Position, lBtn.Size) then
+                        lBtn.Color = Color3.fromHex("#0f0f0f"); lBdr.Color = Color3.fromHex("#3a3a3a")
+                    else
+                        lBtn.Color = Color3.fromHex("#050505"); lBdr.Color = Color3.fromHex("#282828")
+                    end
+                end
+            end
+
             -- Right-click detection for keybinds
             if rightPressed then
                 local rcHandled = false
@@ -2572,13 +2618,23 @@ function Library:CreateWindow(opts)
                         elseif isInside(mPos, cfgState.saveBtn.Position, cfgState.saveBtn.Size) then
                             local names = cfgState.getNames()
                             local name = names[cfgState.getSelectedIdx()]
-                            if name then cfgState.saveConfig(name) end
+                            if name then
+                                cfgState.saveConfig(name)
+                                local btn, bdr = cfgState.saveBtn, cfgState.saveBtnBorder
+                                btn.Color = Color3.fromRGB(0, 180, 60); bdr.Color = Color3.fromRGB(0, 220, 80)
+                                task.spawn(function() task.wait(0.4); btn.Color = Color3.fromHex("#050505"); bdr.Color = Color3.fromHex("#282828") end)
+                            end
                             cfgState.setInputActive(false); cfgState.updateInputDisplay()
                             clickConsumed = true
                         elseif isInside(mPos, cfgState.loadBtn.Position, cfgState.loadBtn.Size) then
                             local names = cfgState.getNames()
                             local name = names[cfgState.getSelectedIdx()]
-                            if name then cfgState.loadConfig(name) end
+                            if name then
+                                cfgState.loadConfig(name)
+                                local btn, bdr = cfgState.loadBtn, cfgState.loadBtnBorder
+                                btn.Color = Color3.fromRGB(0, 180, 60); bdr.Color = Color3.fromRGB(0, 220, 80)
+                                task.spawn(function() task.wait(0.4); btn.Color = Color3.fromHex("#050505"); bdr.Color = Color3.fromHex("#282828") end)
+                            end
                             cfgState.setInputActive(false); cfgState.updateInputDisplay()
                             clickConsumed = true
                         elseif isInside(mPos, cfgState.listBox.Position, cfgState.listBox.Size) then
@@ -3045,7 +3101,11 @@ function Library:CreateWindow(opts)
             listBox = listBox,
             inputBox = inputBox,
             saveBtn = saveBtn,
+            saveBtnBorder = saveBtnBorder,
+            saveBtnText = saveBtnText,
             loadBtn = loadBtn,
+            loadBtnBorder = loadBtnBorder,
+            loadBtnText = loadBtnText,
             refreshList = refreshList,
             saveConfig = saveConfig,
             loadConfig = loadConfig,
