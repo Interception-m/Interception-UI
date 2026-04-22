@@ -1009,6 +1009,13 @@ function Library:CreateWindow(opts)
                     box.Color = val and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
                 end
                 ret.Get = function() return toggleData.state end
+                if keybindData then
+                    ret.GetActive = function() return keybindData.active end
+                    ret.SetActive = function(_, val) keybindData.active = val end
+                else
+                    ret.GetActive = function() return toggleData.state end
+                    ret.SetActive = function() end
+                end
                 configWidgets[#configWidgets+1] = {
                     name = o.Name or "Toggle",
                     get = function() return toggleData.state end,
@@ -2765,7 +2772,13 @@ function Library:CreateWindow(opts)
                     end
                     kb.lastKeyState = keyDown
                 else
-                    kb.active = false
+                    if not kb.isStandalone and kb.toggleRef then
+                        kb.active = kb.toggleRef.state
+                    elseif kb.mode == "always" then
+                        kb.active = true
+                    else
+                        kb.active = false
+                    end
                 end
             end
             if hotkeyListOn then updateHotkeyList() end
