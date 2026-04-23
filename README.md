@@ -73,12 +73,15 @@ local myToggle = Section:AddToggle({
     Callback = function(value) end,  -- optional
     Keybind = true,                  -- optional: adds inline keybind
     Mode = "toggle",                 -- "hold" or "toggle" (for keybind)
+    Colorpicker = true,              -- optional: adds inline color square
+    DefaultColor = Color3.new(1, 0, 0), -- default color (for colorpicker)
 })
 
 myToggle:Get()           -- returns checkbox bool
 myToggle:Set(true)       -- sets value, fires callback
 myToggle:GetActive()     -- keybind active state (requires Keybind=true)
 myToggle:SetActive(false) -- set keybind active state
+myToggle:GetColor()      -- returns Color3 (requires Colorpicker=true)
 ```
 
 When `Keybind = true`, the toggle has two states:
@@ -350,6 +353,7 @@ Window:_toggleHotkeyList(false)  -- hide
 |--------|-----|-----|
 | Toggle | `:Get()` → `bool` | `:Set(bool)` |
 | Toggle+Keybind | `:GetActive()` → `bool` | `:SetActive(bool)` |
+| Toggle+Colorpicker | `:GetColor()` → `Color3` | — |
 | Slider | `:Get()` → `number` | `:Set(number)` |
 | Range Slider | — | `:SetLeft(n)`, `:SetRight(n)` |
 | Keybind | `:Get()` → VK code, `:GetActive()` → `bool` | `:Set(vkCode)` |
