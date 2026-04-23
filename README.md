@@ -42,6 +42,9 @@ local Right = Tab:AddSection("Settings")
 -- Bottom panels (sections 3 & 4, Height = how tall the bottom panel is)
 local BotLeft  = Tab:AddSection("Extra", { Height = 150 })
 local BotRight = Tab:AddSection("Advanced", { Height = 150 })
+
+-- Bottom-right only (no bottom-left needed)
+local BotRight = Tab:AddSection("Map", { Height = 150, Side = "right" })
 ```
 
 ### Layout
@@ -53,6 +56,7 @@ Sections are assigned in order: **1 = top-left, 2 = top-right, 3 = bottom-left, 
 - When `Height = N`, the top panel above it shrinks to `540 - N - 10`px (10px gap between stacked panels)
 - If you only use 2 sections (no Height, no bottom panels), both top panels stay at full 540px
 - You can have bottom panels on one side only (e.g. 3 sections total)
+- Use `Side = "right"` on the 3rd section to place it bottom-right without needing a bottom-left
 
 ---
 
