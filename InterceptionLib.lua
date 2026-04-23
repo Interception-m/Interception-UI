@@ -778,6 +778,13 @@ function Library:CreateWindow(opts)
             local sectionIndex = #tabData.sections + 1
             local panel, panelText, panelYKey
 
+            -- Side override: allow 3rd section to go bottom-right
+            local forcedSide = opts.Side and opts.Side:lower() or nil
+            if sectionIndex == 3 and forcedSide == "right" and (opts.Height or 0) > 0 then
+                sectionIndex = 4
+                tabData.sections[3] = {} -- placeholder so index 4 is valid
+            end
+
             if sectionIndex == 1 then
                 panel = Panel1; panelText = PanelText1; panelYKey = "panel1Y"
             elseif sectionIndex == 2 then
