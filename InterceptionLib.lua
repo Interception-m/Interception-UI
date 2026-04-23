@@ -1288,6 +1288,7 @@ function Library:CreateWindow(opts)
                     tabData.elements[#tabData.elements+1] = cpBorderSq
 
                     cpData = createColorpickerPopup(colorPreview, cpBorderSq, cpColor, function() end, o.Name)
+                    cpData.box = colorPreview
                     cpData.panel = panel
                     cpData.yOffset = y
                 end
