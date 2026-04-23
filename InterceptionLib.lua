@@ -369,6 +369,274 @@ function Library:CreateWindow(opts)
         cpData.toggle(show)
     end
 
+    local function createColorpickerPopup(colorPreview, cpBorder, defaultColor, colorCallback, cpName)
+        local cpH, cpS, cpV = rgbToHsv(defaultColor.R, defaultColor.G, defaultColor.B)
+        local cpAnchor = colorPreview.Position + Vector2.new(20, 0)
+
+        local CPBG = Drawing.new("Square")
+        CPBG.Visible = false; CPBG.Transparency = 1; CPBG.ZIndex = 500
+        CPBG.Color = Color3.fromHex("#0a0a0a"); CPBG.Position = cpAnchor
+        CPBG.Size = Vector2.new(170, 220); CPBG.Filled = true; CPBG.Corner = 6
+
+        local CPBG_Border = Drawing.new("Square")
+        CPBG_Border.Visible = false; CPBG_Border.Transparency = 1; CPBG_Border.ZIndex = 501
+        CPBG_Border.Color = Color3.fromHex("#282828"); CPBG_Border.Filled = false; CPBG_Border.Thickness = 1
+        CPBG_Border.Position = cpAnchor; CPBG_Border.Size = Vector2.new(170, 220); CPBG_Border.Corner = 6
+
+        local CPTitle = newText("cptitle")
+        CPTitle.Visible = false; CPTitle.Transparency = 1; CPTitle.ZIndex = 510
+        CPTitle.Color = Color3.fromHex("#FFFFFF")
+        CPTitle.Position = cpAnchor + Vector2.new(10, 5)
+        CPTitle.Text = cpName or "Color"; CPTitle.Size = 14; CPTitle.Center = false
+        CPTitle.Outline = true; CPTitle.Font = Drawing.Fonts.SystemBold
+
+        local SVArea = Drawing.new("Square")
+        SVArea.Visible = false; SVArea.Transparency = 1; SVArea.ZIndex = 520
+        SVArea.Color = Color3.new(1, 0, 0)
+        SVArea.Position = cpAnchor + Vector2.new(10, 25)
+        SVArea.Size = Vector2.new(150, 110); SVArea.Filled = true
+
+        local SVArea_Border = Drawing.new("Square")
+        SVArea_Border.Visible = false; SVArea_Border.Transparency = 1; SVArea_Border.ZIndex = 523
+        SVArea_Border.Color = Color3.fromHex("#282828"); SVArea_Border.Filled = false; SVArea_Border.Thickness = 1
+        SVArea_Border.Position = cpAnchor + Vector2.new(10, 25); SVArea_Border.Size = Vector2.new(150, 110)
+
+        local whiteStrips = {}
+        for i = 1, 50 do
+            local strip = Drawing.new("Square")
+            strip.Visible = false; strip.Transparency = 1 - ((i - 1) / 50); strip.ZIndex = 521
+            strip.Color = Color3.new(1, 1, 1)
+            strip.Position = cpAnchor + Vector2.new(10 + (i - 1) * 3, 25)
+            strip.Size = Vector2.new(3, 110); strip.Filled = true
+            whiteStrips[i] = strip
+        end
+
+        local blackStrips = {}
+        for i = 1, 55 do
+            local strip = Drawing.new("Square")
+            strip.Visible = false; strip.Transparency = i / 55; strip.ZIndex = 522
+            strip.Color = Color3.new(0, 0, 0)
+            strip.Position = cpAnchor + Vector2.new(10, 25 + (i - 1) * 2)
+            strip.Size = Vector2.new(150, 2); strip.Filled = true
+            blackStrips[i] = strip
+        end
+
+        local HueBG = Drawing.new("Square")
+        HueBG.Visible = false; HueBG.Transparency = 1; HueBG.ZIndex = 529
+        HueBG.Color = Color3.fromHex("#0a0a0a")
+        HueBG.Position = cpAnchor + Vector2.new(10, 145)
+        HueBG.Size = Vector2.new(150, 15); HueBG.Filled = true
+
+        local HueBG_Border = Drawing.new("Square")
+        HueBG_Border.Visible = false; HueBG_Border.Transparency = 1; HueBG_Border.ZIndex = 531
+        HueBG_Border.Color = Color3.fromHex("#282828"); HueBG_Border.Filled = false; HueBG_Border.Thickness = 1
+        HueBG_Border.Position = cpAnchor + Vector2.new(10, 145); HueBG_Border.Size = Vector2.new(150, 15)
+
+        local hueSegments = {}
+        for i = 1, 150 do
+            local seg = Drawing.new("Square")
+            seg.Visible = false; seg.Transparency = 1; seg.ZIndex = 530
+            local hh = (i - 1) / 149 * 360
+            local rr, gg, bb = hsvToRgb(hh, 1, 1)
+            seg.Color = Color3.new(rr, gg, bb)
+            seg.Position = cpAnchor + Vector2.new(10 + (i - 1), 145)
+            seg.Size = Vector2.new(1, 15); seg.Filled = true
+            hueSegments[i] = seg
+        end
+
+        local BrightBG = Drawing.new("Square")
+        BrightBG.Visible = false; BrightBG.Transparency = 1; BrightBG.ZIndex = 539
+        BrightBG.Color = Color3.fromHex("#0a0a0a")
+        BrightBG.Position = cpAnchor + Vector2.new(10, 170)
+        BrightBG.Size = Vector2.new(150, 15); BrightBG.Filled = true
+
+        local BrightBG_Border = Drawing.new("Square")
+        BrightBG_Border.Visible = false; BrightBG_Border.Transparency = 1; BrightBG_Border.ZIndex = 541
+        BrightBG_Border.Color = Color3.fromHex("#282828"); BrightBG_Border.Filled = false; BrightBG_Border.Thickness = 1
+        BrightBG_Border.Position = cpAnchor + Vector2.new(10, 170); BrightBG_Border.Size = Vector2.new(150, 15)
+
+        local brightSegments = {}
+        for i = 1, 150 do
+            local seg = Drawing.new("Square")
+            seg.Visible = false; seg.Transparency = 1; seg.ZIndex = 540
+            local vv = (i - 1) / 149
+            local rr, gg, bb = hsvToRgb(0, 1, vv)
+            seg.Color = Color3.new(rr, gg, bb)
+            seg.Position = cpAnchor + Vector2.new(10 + (i - 1), 170)
+            seg.Size = Vector2.new(1, 15); seg.Filled = true
+            brightSegments[i] = seg
+        end
+
+        local SVSelector = Drawing.new("Square")
+        SVSelector.Visible = false; SVSelector.Transparency = 1; SVSelector.ZIndex = 560
+        SVSelector.Color = Color3.fromHex("#404040"); SVSelector.Position = cpAnchor + Vector2.new(150, 25)
+        SVSelector.Size = Vector2.new(10, 10); SVSelector.Filled = false; SVSelector.Thickness = 2; SVSelector.Corner = 2
+
+        local HueSlider = Drawing.new("Square")
+        HueSlider.Visible = false; HueSlider.Transparency = 1; HueSlider.ZIndex = 560
+        HueSlider.Color = Color3.fromHex("#282828"); HueSlider.Position = cpAnchor + Vector2.new(10, 142)
+        HueSlider.Size = Vector2.new(5, 20); HueSlider.Filled = true; HueSlider.Corner = 2
+
+        local BrightSlider = Drawing.new("Square")
+        BrightSlider.Visible = false; BrightSlider.Transparency = 1; BrightSlider.ZIndex = 560
+        BrightSlider.Color = Color3.fromHex("#282828"); BrightSlider.Position = cpAnchor + Vector2.new(10, 168)
+        BrightSlider.Size = Vector2.new(5, 20); BrightSlider.Filled = true; BrightSlider.Corner = 2
+
+        local CopyBtn = Drawing.new("Square")
+        CopyBtn.Visible = false; CopyBtn.Transparency = 1; CopyBtn.ZIndex = 550
+        CopyBtn.Color = Color3.fromHex("#0a0a0a"); CopyBtn.Position = cpAnchor + Vector2.new(10, 192)
+        CopyBtn.Size = Vector2.new(74, 20); CopyBtn.Filled = true; CopyBtn.Corner = 6
+
+        local CopyBtn_Border = Drawing.new("Square")
+        CopyBtn_Border.Visible = false; CopyBtn_Border.Transparency = 1; CopyBtn_Border.ZIndex = 551
+        CopyBtn_Border.Color = Color3.fromHex("#282828"); CopyBtn_Border.Filled = false; CopyBtn_Border.Thickness = 1
+        CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Size = Vector2.new(74, 20); CopyBtn_Border.Corner = 6
+
+        local CopyText = newText()
+        CopyText.Visible = false; CopyText.Transparency = 1; CopyText.ZIndex = 555
+        CopyText.Color = Color3.fromHex("#FFFFFF"); CopyText.Position = cpAnchor + Vector2.new(35, 194)
+        CopyText.Text = "Copy"; CopyText.Size = 14; CopyText.Center = false
+        CopyText.Outline = true; CopyText.Font = Drawing.Fonts.Monospace
+
+        local PasteBtn = Drawing.new("Square")
+        PasteBtn.Visible = false; PasteBtn.Transparency = 1; PasteBtn.ZIndex = 550
+        PasteBtn.Color = Color3.fromHex("#0a0a0a"); PasteBtn.Position = cpAnchor + Vector2.new(86, 192)
+        PasteBtn.Size = Vector2.new(74, 20); PasteBtn.Filled = true; PasteBtn.Corner = 6
+
+        local PasteBtn_Border = Drawing.new("Square")
+        PasteBtn_Border.Visible = false; PasteBtn_Border.Transparency = 1; PasteBtn_Border.ZIndex = 551
+        PasteBtn_Border.Color = Color3.fromHex("#282828"); PasteBtn_Border.Filled = false; PasteBtn_Border.Thickness = 1
+        PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Size = Vector2.new(74, 20); PasteBtn_Border.Corner = 6
+
+        local PasteText = newText()
+        PasteText.Visible = false; PasteText.Transparency = 1; PasteText.ZIndex = 555
+        PasteText.Color = Color3.fromHex("#FFFFFF"); PasteText.Position = cpAnchor + Vector2.new(108, 194)
+        PasteText.Text = "Paste"; PasteText.Size = 14; PasteText.Center = false
+        PasteText.Outline = true; PasteText.Font = Drawing.Fonts.Monospace
+
+        local allCPElements = {CPBG, CPBG_Border, CPTitle, SVArea, SVArea_Border, SVSelector, HueSlider, BrightSlider, HueBG, HueBG_Border, BrightBG, BrightBG_Border, CopyBtn, CopyBtn_Border, CopyText, PasteBtn, PasteBtn_Border, PasteText}
+
+        local function updateCPPositions()
+            cpAnchor = colorPreview.Position + Vector2.new(20, 0)
+            CPBG.Position = cpAnchor; CPBG_Border.Position = cpAnchor
+            CPTitle.Position = cpAnchor + Vector2.new(10, 5)
+            SVArea.Position = cpAnchor + Vector2.new(10, 25)
+            SVArea_Border.Position = cpAnchor + Vector2.new(10, 25)
+            for i = 1, 50 do whiteStrips[i].Position = cpAnchor + Vector2.new(10 + (i - 1) * 3, 25) end
+            for i = 1, 55 do blackStrips[i].Position = cpAnchor + Vector2.new(10, 25 + (i - 1) * 2) end
+            HueBG.Position = cpAnchor + Vector2.new(10, 145); HueBG_Border.Position = cpAnchor + Vector2.new(10, 145)
+            BrightBG.Position = cpAnchor + Vector2.new(10, 170); BrightBG_Border.Position = cpAnchor + Vector2.new(10, 170)
+            for i = 1, 150 do
+                hueSegments[i].Position = cpAnchor + Vector2.new(10 + (i - 1), 145)
+                brightSegments[i].Position = cpAnchor + Vector2.new(10 + (i - 1), 170)
+            end
+            SVSelector.Position = cpAnchor + Vector2.new(10 + cpS * 140, 25 + (1 - cpV) * 100)
+            HueSlider.Position = cpAnchor + Vector2.new(10 + (cpH / 360) * 145, 142)
+            BrightSlider.Position = cpAnchor + Vector2.new(10 + cpV * 145, 168)
+            CopyBtn.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192)
+            CopyText.Position = cpAnchor + Vector2.new(35, 194)
+            PasteBtn.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192)
+            PasteText.Position = cpAnchor + Vector2.new(108, 194)
+        end
+
+        local function updateCPColor(source)
+            local r, g, b = hsvToRgb(cpH, 1, 1)
+            SVArea.Color = Color3.new(r, g, b)
+            for i = 1, 150 do
+                local vv = (i - 1) / 149
+                local br, bg, bb = hsvToRgb(cpH, 1, vv)
+                brightSegments[i].Color = Color3.new(br, bg, bb)
+            end
+            if source ~= "bright" then
+                SVSelector.Position = cpAnchor + Vector2.new(10 + cpS * 140, 25 + (1 - cpV) * 100)
+            end
+            if source ~= "sv" then
+                HueSlider.Position = cpAnchor + Vector2.new(10 + (cpH / 360) * 145, 142)
+                BrightSlider.Position = cpAnchor + Vector2.new(10 + cpV * 145, 168)
+            end
+            local fr, fg, fb = hsvToRgb(cpH, cpS, cpV)
+            colorPreview.Color = Color3.new(fr, fg, fb)
+            colorCallback(Color3.new(fr, fg, fb))
+        end
+
+        local cpData = {
+            cpOpen = false, cpDrag = nil, cpH = cpH, cpS = cpS, cpV = cpV,
+            colorPreview = colorPreview, cpBorder = cpBorder,
+            SVArea = SVArea, hueSegments = hueSegments, brightSegments = brightSegments,
+            CPBG = CPBG, CopyBtn = CopyBtn, PasteBtn = PasteBtn,
+            updatePositions = updateCPPositions, updateColor = updateCPColor,
+        }
+
+        cpData.setHSV = function(h, s, v)
+            cpH = h; cpS = s; cpV = v
+            cpData.cpH = h; cpData.cpS = s; cpData.cpV = v
+            local fr, fg, fb = hsvToRgb(h, s, v)
+            colorPreview.Color = Color3.new(fr, fg, fb)
+        end
+
+        cpData.toggle = function(show)
+            cpData.cpOpen = show
+            for _, el in ipairs(allCPElements) do el.Visible = show end
+            for i = 1, 50 do whiteStrips[i].Visible = show end
+            for i = 1, 55 do blackStrips[i].Visible = show end
+            for i = 1, 150 do hueSegments[i].Visible = show; brightSegments[i].Visible = show end
+            if show then updateCPPositions(); updateCPColor() end
+        end
+
+        cpData.handleClick = function(mPos, pressed)
+            if pressed and isInside(mPos, colorPreview.Position, colorPreview.Size) then
+                toggleCP(cpData, not cpData.cpOpen); return true
+            end
+            if cpData.cpOpen and pressed then
+                if isInside(mPos, SVArea.Position, SVArea.Size) then
+                    cpData.cpDrag = "sv"
+                    cpS = math.clamp((mPos.X - SVArea.Position.X) / 150, 0, 1)
+                    cpV = 1 - math.clamp((mPos.Y - SVArea.Position.Y) / 110, 0, 1)
+                    cpData.cpS = cpS; cpData.cpV = cpV
+                    cpH = cpData.cpH; updateCPColor("sv"); return true
+                elseif isInside(mPos, hueSegments[1].Position, Vector2.new(150, 15)) then
+                    cpData.cpDrag = "hue"
+                    cpH = math.clamp((mPos.X - hueSegments[1].Position.X) / 150, 0, 1) * 360
+                    cpData.cpH = cpH; cpS = cpData.cpS; cpV = cpData.cpV; updateCPColor("hue"); return true
+                elseif isInside(mPos, brightSegments[1].Position, Vector2.new(150, 15)) then
+                    cpData.cpDrag = "bright"
+                    cpV = math.clamp((mPos.X - brightSegments[1].Position.X) / 150, 0, 1)
+                    cpData.cpV = cpV; cpH = cpData.cpH; cpS = cpData.cpS; updateCPColor("bright"); return true
+                elseif isInside(mPos, CopyBtn.Position, CopyBtn.Size) then
+                    local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
+                    local hex = string.format("#%02X%02X%02X", math.floor(rr*255+0.5), math.floor(gg*255+0.5), math.floor(bb*255+0.5))
+                    pcall(function() setclipboard(hex) end)
+                    return true
+                elseif isInside(mPos, PasteBtn.Position, PasteBtn.Size) then
+                    pcall(function() end)
+                    return true
+                elseif isInside(mPos, CPBG.Position, CPBG.Size) then
+                    return true
+                else
+                    toggleCP(cpData, false)
+                end
+            end
+            return false
+        end
+
+        cpData.handleDrag = function(mPos)
+            if cpData.cpDrag == "sv" then
+                cpS = math.clamp((mPos.X - SVArea.Position.X) / 150, 0, 1)
+                cpV = 1 - math.clamp((mPos.Y - SVArea.Position.Y) / 110, 0, 1)
+                cpData.cpS = cpS; cpData.cpV = cpV; cpH = cpData.cpH; updateCPColor("sv")
+            elseif cpData.cpDrag == "hue" then
+                cpH = math.clamp((mPos.X - hueSegments[1].Position.X) / 150, 0, 1) * 360
+                cpData.cpH = cpH; cpS = cpData.cpS; cpV = cpData.cpV; updateCPColor("hue")
+            elseif cpData.cpDrag == "bright" then
+                cpV = math.clamp((mPos.X - brightSegments[1].Position.X) / 150, 0, 1)
+                cpData.cpV = cpV; cpH = cpData.cpH; cpS = cpData.cpS; updateCPColor("bright")
+            end
+        end
+
+        allColorpickers[#allColorpickers+1] = cpData
+        return cpData
+    end
+
     local function closeAllPopups()
         if openCP then toggleCP(openCP, false) end
         if rcMenuOpen then hideRCMenu() end
@@ -999,6 +1267,31 @@ function Library:CreateWindow(opts)
                     }
                 end
 
+                -- Inline colorpicker on same row
+                local cpData = nil
+                if o.Colorpicker then
+                    local cpColor = o.DefaultColor or Color3.new(1, 0, 0)
+                    local cpX = keybindData and 200 or 235
+
+                    local colorPreview = Drawing.new("Square")
+                    colorPreview.Visible = vis; colorPreview.Transparency = 1; colorPreview.ZIndex = 350
+                    colorPreview.Color = cpColor
+                    colorPreview.Position = panelPos + Vector2.new(cpX, y)
+                    colorPreview.Size = Vector2.new(15, 15); colorPreview.Filled = true
+
+                    local cpBorderSq = Drawing.new("Square")
+                    cpBorderSq.Visible = vis; cpBorderSq.Transparency = 1; cpBorderSq.ZIndex = 351
+                    cpBorderSq.Color = Color3.fromHex("#282828"); cpBorderSq.Filled = false; cpBorderSq.Thickness = 1
+                    cpBorderSq.Position = colorPreview.Position; cpBorderSq.Size = colorPreview.Size
+
+                    tabData.elements[#tabData.elements+1] = colorPreview
+                    tabData.elements[#tabData.elements+1] = cpBorderSq
+
+                    cpData = createColorpickerPopup(colorPreview, cpBorderSq, cpColor, function() end, o.Name)
+                    cpData.panel = panel
+                    cpData.yOffset = y
+                end
+
                 toggleData.onClick = function()
                     toggleData.state = not toggleData.state
                     toggleState = toggleData.state
@@ -1025,36 +1318,63 @@ function Library:CreateWindow(opts)
                     ret.GetActive = function() return toggleData.state end
                     ret.SetActive = function() end
                 end
+                if cpData then
+                    ret.GetColor = function()
+                        local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
+                        return Color3.new(rr, gg, bb)
+                    end
+                end
                 if keybindData then
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Toggle",
-                        get = function() return {state = toggleData.state, key = keybindData.key, mode = keybindData.mode} end,
-                        set = function(v)
-                            if type(v) == "table" then
-                                ret:Set(v.state)
-                                if v.key ~= nil or v.mode ~= nil then
-                                    keybindData.key = v.key
-                                    if v.key and KeyNames[v.key] then
-                                        keybindData.bindText.Text = "[" .. KeyNames[v.key] .. "]"
-                                    else
-                                        keybindData.bindText.Text = "[None]"
-                                    end
-                                    keybindData.bindText.Position = Vector2.new(rightAlignX(keybindData.bindText.Text, panel.Position, panel.Size.X), panel.Position.Y + keybindData.yPos)
-                                    if v.mode then keybindData.mode = v.mode end
+                    local cfgGet = function()
+                        local d = {state = toggleData.state, key = keybindData.key, mode = keybindData.mode}
+                        if cpData then
+                            local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
+                            d.color = {r = math.floor(rr * 255), g = math.floor(gg * 255), b = math.floor(bb * 255)}
+                        end
+                        return d
+                    end
+                    local cfgSet = function(v)
+                        if type(v) == "table" then
+                            ret:Set(v.state)
+                            if v.key ~= nil or v.mode ~= nil then
+                                keybindData.key = v.key
+                                if v.key and KeyNames[v.key] then
+                                    keybindData.bindText.Text = "[" .. KeyNames[v.key] .. "]"
+                                else
+                                    keybindData.bindText.Text = "[None]"
                                 end
-                            else
-                                ret:Set(v)
+                                keybindData.bindText.Position = Vector2.new(rightAlignX(keybindData.bindText.Text, panel.Position, panel.Size.X), panel.Position.Y + keybindData.yPos)
+                                if v.mode then keybindData.mode = v.mode end
                             end
-                        end,
-                    }
+                            if v.color and cpData then
+                                local h, s, val = rgbToHsv(v.color.r / 255, v.color.g / 255, v.color.b / 255)
+                                cpData.setHSV(h, s, val)
+                            end
+                        else
+                            ret:Set(v)
+                        end
+                    end
+                    configWidgets[#configWidgets+1] = { name = o.Name or "Toggle", get = cfgGet, set = cfgSet }
                 else
-                    configWidgets[#configWidgets+1] = {
-                        name = o.Name or "Toggle",
-                        get = function() return toggleData.state end,
-                        set = function(v)
-                            if type(v) == "table" then ret:Set(v.state) else ret:Set(v) end
-                        end,
-                    }
+                    local cfgGet = function()
+                        if cpData then
+                            local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
+                            return {state = toggleData.state, color = {r = math.floor(rr * 255), g = math.floor(gg * 255), b = math.floor(bb * 255)}}
+                        end
+                        return toggleData.state
+                    end
+                    local cfgSet = function(v)
+                        if type(v) == "table" then
+                            ret:Set(v.state)
+                            if v.color and cpData then
+                                local h, s, val = rgbToHsv(v.color.r / 255, v.color.g / 255, v.color.b / 255)
+                                cpData.setHSV(h, s, val)
+                            end
+                        else
+                            ret:Set(v)
+                        end
+                    end
+                    configWidgets[#configWidgets+1] = { name = o.Name or "Toggle", get = cfgGet, set = cfgSet }
                 end
                 return ret
             end
@@ -1426,276 +1746,13 @@ function Library:CreateWindow(opts)
                     end
                 end
 
-                local toggleState = false
-
-                -- CP popup elements
-                local cpH, cpS, cpV = rgbToHsv(defaultColor.R, defaultColor.G, defaultColor.B)
-                local cpOpen = false
-                local cpDrag = nil
-                local cpAnchor = colorPreview.Position + Vector2.new(20, 0)
-
-                local CPBG = Drawing.new("Square")
-                CPBG.Visible = false; CPBG.Transparency = 1; CPBG.ZIndex = 500
-                CPBG.Color = Color3.fromHex("#0a0a0a"); CPBG.Position = cpAnchor
-                CPBG.Size = Vector2.new(170, 220); CPBG.Filled = true; CPBG.Corner = 6
-
-                local CPBG_Border = Drawing.new("Square")
-                CPBG_Border.Visible = false; CPBG_Border.Transparency = 1; CPBG_Border.ZIndex = 501
-                CPBG_Border.Color = Color3.fromHex("#282828"); CPBG_Border.Filled = false; CPBG_Border.Thickness = 1
-                CPBG_Border.Position = cpAnchor; CPBG_Border.Size = Vector2.new(170, 220); CPBG_Border.Corner = 6
-
-                local CPTitle = newText("cptitle")
-                CPTitle.Visible = false; CPTitle.Transparency = 1; CPTitle.ZIndex = 510
-                CPTitle.Color = Color3.fromHex("#FFFFFF")
-                CPTitle.Position = cpAnchor + Vector2.new(10, 5)
-                CPTitle.Text = o.Name or "Color"; CPTitle.Size = 14; CPTitle.Center = false
-                CPTitle.Outline = true; CPTitle.Font = Drawing.Fonts.SystemBold
-
-                local SVArea = Drawing.new("Square")
-                SVArea.Visible = false; SVArea.Transparency = 1; SVArea.ZIndex = 520
-                SVArea.Color = Color3.new(1, 0, 0)
-                SVArea.Position = cpAnchor + Vector2.new(10, 25)
-                SVArea.Size = Vector2.new(150, 110); SVArea.Filled = true
-
-                local SVArea_Border = Drawing.new("Square")
-                SVArea_Border.Visible = false; SVArea_Border.Transparency = 1; SVArea_Border.ZIndex = 523
-                SVArea_Border.Color = Color3.fromHex("#282828"); SVArea_Border.Filled = false; SVArea_Border.Thickness = 1
-                SVArea_Border.Position = cpAnchor + Vector2.new(10, 25); SVArea_Border.Size = Vector2.new(150, 110)
-
-                local whiteStrips = {}
-                for i = 1, 50 do
-                    local strip = Drawing.new("Square")
-                    strip.Visible = false; strip.Transparency = 1 - ((i - 1) / 50); strip.ZIndex = 521
-                    strip.Color = Color3.new(1, 1, 1)
-                    strip.Position = cpAnchor + Vector2.new(10 + (i - 1) * 3, 25)
-                    strip.Size = Vector2.new(3, 110); strip.Filled = true
-                    whiteStrips[i] = strip
-                end
-
-                local blackStrips = {}
-                for i = 1, 55 do
-                    local strip = Drawing.new("Square")
-                    strip.Visible = false; strip.Transparency = i / 55; strip.ZIndex = 522
-                    strip.Color = Color3.new(0, 0, 0)
-                    strip.Position = cpAnchor + Vector2.new(10, 25 + (i - 1) * 2)
-                    strip.Size = Vector2.new(150, 2); strip.Filled = true
-                    blackStrips[i] = strip
-                end
-
-                local HueBG = Drawing.new("Square")
-                HueBG.Visible = false; HueBG.Transparency = 1; HueBG.ZIndex = 529
-                HueBG.Color = Color3.fromHex("#0a0a0a")
-                HueBG.Position = cpAnchor + Vector2.new(10, 145)
-                HueBG.Size = Vector2.new(150, 15); HueBG.Filled = true
-
-                local HueBG_Border = Drawing.new("Square")
-                HueBG_Border.Visible = false; HueBG_Border.Transparency = 1; HueBG_Border.ZIndex = 531
-                HueBG_Border.Color = Color3.fromHex("#282828"); HueBG_Border.Filled = false; HueBG_Border.Thickness = 1
-                HueBG_Border.Position = cpAnchor + Vector2.new(10, 145); HueBG_Border.Size = Vector2.new(150, 15)
-
-                local hueSegments = {}
-                for i = 1, 150 do
-                    local seg = Drawing.new("Square")
-                    seg.Visible = false; seg.Transparency = 1; seg.ZIndex = 530
-                    local hh = (i - 1) / 149 * 360
-                    local rr, gg, bb = hsvToRgb(hh, 1, 1)
-                    seg.Color = Color3.new(rr, gg, bb)
-                    seg.Position = cpAnchor + Vector2.new(10 + (i - 1), 145)
-                    seg.Size = Vector2.new(1, 15); seg.Filled = true
-                    hueSegments[i] = seg
-                end
-
-                local BrightBG = Drawing.new("Square")
-                BrightBG.Visible = false; BrightBG.Transparency = 1; BrightBG.ZIndex = 539
-                BrightBG.Color = Color3.fromHex("#0a0a0a")
-                BrightBG.Position = cpAnchor + Vector2.new(10, 170)
-                BrightBG.Size = Vector2.new(150, 15); BrightBG.Filled = true
-
-                local BrightBG_Border = Drawing.new("Square")
-                BrightBG_Border.Visible = false; BrightBG_Border.Transparency = 1; BrightBG_Border.ZIndex = 541
-                BrightBG_Border.Color = Color3.fromHex("#282828"); BrightBG_Border.Filled = false; BrightBG_Border.Thickness = 1
-                BrightBG_Border.Position = cpAnchor + Vector2.new(10, 170); BrightBG_Border.Size = Vector2.new(150, 15)
-
-                local brightSegments = {}
-                for i = 1, 150 do
-                    local seg = Drawing.new("Square")
-                    seg.Visible = false; seg.Transparency = 1; seg.ZIndex = 540
-                    local vv = (i - 1) / 149
-                    local rr, gg, bb = hsvToRgb(0, 1, vv)
-                    seg.Color = Color3.new(rr, gg, bb)
-                    seg.Position = cpAnchor + Vector2.new(10 + (i - 1), 170)
-                    seg.Size = Vector2.new(1, 15); seg.Filled = true
-                    brightSegments[i] = seg
-                end
-
-                local SVSelector = Drawing.new("Square")
-                SVSelector.Visible = false; SVSelector.Transparency = 1; SVSelector.ZIndex = 560
-                SVSelector.Color = Color3.fromHex("#404040"); SVSelector.Position = cpAnchor + Vector2.new(150, 25)
-                SVSelector.Size = Vector2.new(10, 10); SVSelector.Filled = false; SVSelector.Thickness = 2; SVSelector.Corner = 2
-
-                local HueSlider = Drawing.new("Square")
-                HueSlider.Visible = false; HueSlider.Transparency = 1; HueSlider.ZIndex = 560
-                HueSlider.Color = Color3.fromHex("#282828"); HueSlider.Position = cpAnchor + Vector2.new(10, 142)
-                HueSlider.Size = Vector2.new(5, 20); HueSlider.Filled = true; HueSlider.Corner = 2
-
-                local BrightSlider = Drawing.new("Square")
-                BrightSlider.Visible = false; BrightSlider.Transparency = 1; BrightSlider.ZIndex = 560
-                BrightSlider.Color = Color3.fromHex("#282828"); BrightSlider.Position = cpAnchor + Vector2.new(10, 168)
-                BrightSlider.Size = Vector2.new(5, 20); BrightSlider.Filled = true; BrightSlider.Corner = 2
-
-                local CopyBtn = Drawing.new("Square")
-                CopyBtn.Visible = false; CopyBtn.Transparency = 1; CopyBtn.ZIndex = 550
-                CopyBtn.Color = Color3.fromHex("#0a0a0a"); CopyBtn.Position = cpAnchor + Vector2.new(10, 192)
-                CopyBtn.Size = Vector2.new(74, 20); CopyBtn.Filled = true; CopyBtn.Corner = 6
-
-                local CopyBtn_Border = Drawing.new("Square")
-                CopyBtn_Border.Visible = false; CopyBtn_Border.Transparency = 1; CopyBtn_Border.ZIndex = 551
-                CopyBtn_Border.Color = Color3.fromHex("#282828"); CopyBtn_Border.Filled = false; CopyBtn_Border.Thickness = 1
-                CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Size = Vector2.new(74, 20); CopyBtn_Border.Corner = 6
-
-                local CopyText = newText()
-                CopyText.Visible = false; CopyText.Transparency = 1; CopyText.ZIndex = 555
-                CopyText.Color = Color3.fromHex("#FFFFFF"); CopyText.Position = cpAnchor + Vector2.new(35, 194)
-                CopyText.Text = "Copy"; CopyText.Size = 14; CopyText.Center = false
-                CopyText.Outline = true; CopyText.Font = Drawing.Fonts.Monospace
-
-                local PasteBtn = Drawing.new("Square")
-                PasteBtn.Visible = false; PasteBtn.Transparency = 1; PasteBtn.ZIndex = 550
-                PasteBtn.Color = Color3.fromHex("#0a0a0a"); PasteBtn.Position = cpAnchor + Vector2.new(86, 192)
-                PasteBtn.Size = Vector2.new(74, 20); PasteBtn.Filled = true; PasteBtn.Corner = 6
-
-                local PasteBtn_Border = Drawing.new("Square")
-                PasteBtn_Border.Visible = false; PasteBtn_Border.Transparency = 1; PasteBtn_Border.ZIndex = 551
-                PasteBtn_Border.Color = Color3.fromHex("#282828"); PasteBtn_Border.Filled = false; PasteBtn_Border.Thickness = 1
-                PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Size = Vector2.new(74, 20); PasteBtn_Border.Corner = 6
-
-                local PasteText = newText()
-                PasteText.Visible = false; PasteText.Transparency = 1; PasteText.ZIndex = 555
-                PasteText.Color = Color3.fromHex("#FFFFFF"); PasteText.Position = cpAnchor + Vector2.new(108, 194)
-                PasteText.Text = "Paste"; PasteText.Size = 14; PasteText.Center = false
-                PasteText.Outline = true; PasteText.Font = Drawing.Fonts.Monospace
-
-                local allCPElements = {CPBG, CPBG_Border, CPTitle, SVArea, SVArea_Border, SVSelector, HueSlider, BrightSlider, HueBG, HueBG_Border, BrightBG, BrightBG_Border, CopyBtn, CopyBtn_Border, CopyText, PasteBtn, PasteBtn_Border, PasteText}
-
-                local function updateCPPositions()
-                    cpAnchor = colorPreview.Position + Vector2.new(20, 0)
-                    CPBG.Position = cpAnchor; CPBG_Border.Position = cpAnchor
-                    CPTitle.Position = cpAnchor + Vector2.new(10, 5)
-                    SVArea.Position = cpAnchor + Vector2.new(10, 25)
-                    SVArea_Border.Position = cpAnchor + Vector2.new(10, 25)
-                    for i = 1, 50 do whiteStrips[i].Position = cpAnchor + Vector2.new(10 + (i - 1) * 3, 25) end
-                    for i = 1, 55 do blackStrips[i].Position = cpAnchor + Vector2.new(10, 25 + (i - 1) * 2) end
-                    HueBG.Position = cpAnchor + Vector2.new(10, 145); HueBG_Border.Position = cpAnchor + Vector2.new(10, 145)
-                    BrightBG.Position = cpAnchor + Vector2.new(10, 170); BrightBG_Border.Position = cpAnchor + Vector2.new(10, 170)
-                    for i = 1, 150 do
-                        hueSegments[i].Position = cpAnchor + Vector2.new(10 + (i - 1), 145)
-                        brightSegments[i].Position = cpAnchor + Vector2.new(10 + (i - 1), 170)
-                    end
-                    SVSelector.Position = cpAnchor + Vector2.new(10 + cpS * 140, 25 + (1 - cpV) * 100)
-                    HueSlider.Position = cpAnchor + Vector2.new(10 + (cpH / 360) * 145, 142)
-                    BrightSlider.Position = cpAnchor + Vector2.new(10 + cpV * 145, 168)
-                    CopyBtn.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192)
-                    CopyText.Position = cpAnchor + Vector2.new(35, 194)
-                    PasteBtn.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192)
-                    PasteText.Position = cpAnchor + Vector2.new(108, 194)
-                end
-
-                local function updateCPColor(source)
-                    local r, g, b = hsvToRgb(cpH, 1, 1)
-                    SVArea.Color = Color3.new(r, g, b)
-                    for i = 1, 150 do
-                        local vv = (i - 1) / 149
-                        local br, bg, bb = hsvToRgb(cpH, 1, vv)
-                        brightSegments[i].Color = Color3.new(br, bg, bb)
-                    end
-                    if source ~= "bright" then
-                        SVSelector.Position = cpAnchor + Vector2.new(10 + cpS * 140, 25 + (1 - cpV) * 100)
-                    end
-                    if source ~= "sv" then
-                        HueSlider.Position = cpAnchor + Vector2.new(10 + (cpH / 360) * 145, 142)
-                        BrightSlider.Position = cpAnchor + Vector2.new(10 + cpV * 145, 168)
-                    end
-                    local fr, fg, fb = hsvToRgb(cpH, cpS, cpV)
-                    colorPreview.Color = Color3.new(fr, fg, fb)
-                    callback(Color3.new(fr, fg, fb))
-                end
-
-                local cpData = {
-                    cpOpen = false, cpDrag = nil, cpH = cpH, cpS = cpS, cpV = cpV,
-                    colorPreview = colorPreview, cpBorder = cpBorder,
-                    SVArea = SVArea, hueSegments = hueSegments, brightSegments = brightSegments,
-                    CPBG = CPBG, CopyBtn = CopyBtn, PasteBtn = PasteBtn,
-                    box = box or colorPreview, boxBorder = boxBorder, toggleState = false,
-                    hasToggle = hasToggle,
-                    panel = panel, yOffset = y,
-                    updatePositions = updateCPPositions, updateColor = updateCPColor,
-                }
-
-                cpData.setHSV = function(h, s, v)
-                    cpH = h; cpS = s; cpV = v
-                    cpData.cpH = h; cpData.cpS = s; cpData.cpV = v
-                    local fr, fg, fb = hsvToRgb(h, s, v)
-                    colorPreview.Color = Color3.new(fr, fg, fb)
-                end
-
-                cpData.toggle = function(show)
-                    cpData.cpOpen = show
-                    for _, el in ipairs(allCPElements) do el.Visible = show end
-                    for i = 1, 50 do whiteStrips[i].Visible = show end
-                    for i = 1, 55 do blackStrips[i].Visible = show end
-                    for i = 1, 150 do hueSegments[i].Visible = show; brightSegments[i].Visible = show end
-                    if show then updateCPPositions(); updateCPColor() end
-                end
-
-                cpData.handleClick = function(mPos, pressed)
-                    if pressed and isInside(mPos, colorPreview.Position, colorPreview.Size) then
-                        toggleCP(cpData, not cpData.cpOpen); return true
-                    end
-                    if cpData.cpOpen and pressed then
-                        if isInside(mPos, SVArea.Position, SVArea.Size) then
-                            cpData.cpDrag = "sv"
-                            cpS = math.clamp((mPos.X - SVArea.Position.X) / 150, 0, 1)
-                            cpV = 1 - math.clamp((mPos.Y - SVArea.Position.Y) / 110, 0, 1)
-                            cpData.cpS = cpS; cpData.cpV = cpV
-                            cpH = cpData.cpH; updateCPColor("sv"); return true
-                        elseif isInside(mPos, hueSegments[1].Position, Vector2.new(150, 15)) then
-                            cpData.cpDrag = "hue"
-                            cpH = math.clamp((mPos.X - hueSegments[1].Position.X) / 150, 0, 1) * 360
-                            cpData.cpH = cpH; cpS = cpData.cpS; cpV = cpData.cpV; updateCPColor("hue"); return true
-                        elseif isInside(mPos, brightSegments[1].Position, Vector2.new(150, 15)) then
-                            cpData.cpDrag = "bright"
-                            cpV = math.clamp((mPos.X - brightSegments[1].Position.X) / 150, 0, 1)
-                            cpData.cpV = cpV; cpH = cpData.cpH; cpS = cpData.cpS; updateCPColor("bright"); return true
-                        elseif isInside(mPos, CopyBtn.Position, CopyBtn.Size) then
-                            local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
-                            local hex = string.format("#%02X%02X%02X", math.floor(rr*255+0.5), math.floor(gg*255+0.5), math.floor(bb*255+0.5))
-                            pcall(function() setclipboard(hex) end)
-                            return true
-                        elseif isInside(mPos, PasteBtn.Position, PasteBtn.Size) then
-                            pcall(function() end) -- no getclipboard in Matcha
-                            return true
-                        elseif isInside(mPos, CPBG.Position, CPBG.Size) then
-                            return true
-                        else
-                            toggleCP(cpData, false)
-                        end
-                    end
-                    return false
-                end
-
-                cpData.handleDrag = function(mPos)
-                    if cpData.cpDrag == "sv" then
-                        cpS = math.clamp((mPos.X - SVArea.Position.X) / 150, 0, 1)
-                        cpV = 1 - math.clamp((mPos.Y - SVArea.Position.Y) / 110, 0, 1)
-                        cpData.cpS = cpS; cpData.cpV = cpV; cpH = cpData.cpH; updateCPColor("sv")
-                    elseif cpData.cpDrag == "hue" then
-                        cpH = math.clamp((mPos.X - hueSegments[1].Position.X) / 150, 0, 1) * 360
-                        cpData.cpH = cpH; cpS = cpData.cpS; cpV = cpData.cpV; updateCPColor("hue")
-                    elseif cpData.cpDrag == "bright" then
-                        cpV = math.clamp((mPos.X - brightSegments[1].Position.X) / 150, 0, 1)
-                        cpData.cpV = cpV; cpH = cpData.cpH; cpS = cpData.cpS; updateCPColor("bright")
-                    end
-                end
+                local cpData = createColorpickerPopup(colorPreview, cpBorder, defaultColor, callback, o.Name)
+                cpData.box = box or colorPreview
+                cpData.boxBorder = boxBorder
+                cpData.toggleState = false
+                cpData.hasToggle = hasToggle
+                cpData.panel = panel
+                cpData.yOffset = y
 
                 cpData.onClick = function()
                     if not hasToggle then return end
@@ -1703,7 +1760,6 @@ function Library:CreateWindow(opts)
                     box.Color = cpData.toggleState and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a")
                 end
 
-                allColorpickers[#allColorpickers+1] = cpData
                 advanceY(25)
 
                 local ret = {}
@@ -1713,10 +1769,6 @@ function Library:CreateWindow(opts)
                 end
                 if hasToggle then
                     ret.Get = function() return cpData.toggleState end
-                    ret.Set = function(_, val)
-                        cpData.toggleState = val
-                        if box then box.Color = val and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a") end
-                    end
                 end
                 configWidgets[#configWidgets+1] = {
                     name = o.Name or "Colorpicker",
