@@ -1711,6 +1711,13 @@ function Library:CreateWindow(opts)
                     local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
                     return Color3.new(rr, gg, bb)
                 end
+                if hasToggle then
+                    ret.Get = function() return cpData.toggleState end
+                    ret.Set = function(_, val)
+                        cpData.toggleState = val
+                        if box then box.Color = val and Color3.fromHex("#282828") or Color3.fromHex("#0a0a0a") end
+                    end
+                end
                 configWidgets[#configWidgets+1] = {
                     name = o.Name or "Colorpicker",
                     get = function()
