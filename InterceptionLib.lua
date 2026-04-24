@@ -3036,12 +3036,15 @@ function Library:CreateWindow(opts)
             for _, w in ipairs(configWidgets) do
                 data[w.name] = w.get()
             end
+            data["__hkPos"] = {HotkeyBG.Position.X, HotkeyBG.Position.Y}
+            for i, ip in ipairs(allInfoPanels) do
+                data["__ipPos" .. i] = {ip.bg.Position.X, ip.bg.Position.Y}
+            end
             pcall(function()
                 writefile(configDir .. "\\" .. name .. ".json", HttpService:JSONEncode(data))
             end)
         end
 
-        -- Load config from file
         local function loadConfig(name)
             local path = configDir .. "\\" .. name .. ".json"
             local ok, data = pcall(function()
@@ -3051,6 +3054,20 @@ function Library:CreateWindow(opts)
             for _, w in ipairs(configWidgets) do
                 if data[w.name] ~= nil then
                     pcall(w.set, data[w.name])
+                end
+            end
+            if data["__hkPos"] then
+                pcall(function()
+                    HotkeyBG.Position = Vector2.new(data["__hkPos"][1], data["__hkPos"][2])
+                    updateHKPositions()
+                end)
+            end
+            for i, ip in ipairs(allInfoPanels) do
+                if data["__ipPos" .. i] then
+                    pcall(function()
+                        ip.bg.Position = Vector2.new(data["__ipPos" .. i][1], data["__ipPos" .. i][2])
+                        ip.updatePositions()
+                    end)
                 end
             end
         end
