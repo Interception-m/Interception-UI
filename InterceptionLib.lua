@@ -880,7 +880,7 @@ function Library:CreateWindow(opts)
         function ret:SetVisible(show)
             ipVisible = show
             ipData.visible = show
-            setDrawingsVisible(show and menuOpen)
+            setDrawingsVisible(show)
             if show then refresh() end
         end
 
@@ -927,6 +927,10 @@ function Library:CreateWindow(opts)
 
     function Window:GetMenuKeyName()
         return KeyNames[menuKey] or "End"
+    end
+
+    function Window:IsOpen()
+        return menuOpen
     end
 
     function Window:SetFont(font, exclude)
@@ -2211,9 +2215,6 @@ function Library:CreateWindow(opts)
         else
             closeAllPopups()
             dragging = nil
-            for _, ip in ipairs(allInfoPanels) do
-                ip.setDrawingsVisible(false)
-            end
         end
     end
 
