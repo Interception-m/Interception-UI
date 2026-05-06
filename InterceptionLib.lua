@@ -447,39 +447,25 @@ function Library:CreateWindow(opts)
         BrightSlider.Color = Color3.fromHex("#282828"); BrightSlider.Position = cpAnchor + Vector2.new(10, 168)
         BrightSlider.Size = Vector2.new(5, 20); BrightSlider.Filled = true; BrightSlider.Corner = 2
 
-        local CopyBtn = Drawing.new("Square")
-        CopyBtn.Visible = false; CopyBtn.Transparency = 1; CopyBtn.ZIndex = 550
-        CopyBtn.Color = Color3.fromHex("#0a0a0a"); CopyBtn.Position = cpAnchor + Vector2.new(10, 192)
-        CopyBtn.Size = Vector2.new(74, 20); CopyBtn.Filled = true; CopyBtn.Corner = 6
+        -- Hex input bar (replaces Copy/Paste buttons). Click to focus, type hex,
+        -- Enter to commit, Escape to cancel. Live updates color on valid 3/6 hex.
+        local HexBG = Drawing.new("Square")
+        HexBG.Visible = false; HexBG.Transparency = 1; HexBG.ZIndex = 550
+        HexBG.Color = Color3.fromHex("#0a0a0a"); HexBG.Position = cpAnchor + Vector2.new(10, 192)
+        HexBG.Size = Vector2.new(150, 20); HexBG.Filled = true; HexBG.Corner = 6
 
-        local CopyBtn_Border = Drawing.new("Square")
-        CopyBtn_Border.Visible = false; CopyBtn_Border.Transparency = 1; CopyBtn_Border.ZIndex = 551
-        CopyBtn_Border.Color = Color3.fromHex("#282828"); CopyBtn_Border.Filled = false; CopyBtn_Border.Thickness = 1
-        CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Size = Vector2.new(74, 20); CopyBtn_Border.Corner = 6
+        local HexBG_Border = Drawing.new("Square")
+        HexBG_Border.Visible = false; HexBG_Border.Transparency = 1; HexBG_Border.ZIndex = 551
+        HexBG_Border.Color = Color3.fromHex("#282828"); HexBG_Border.Filled = false; HexBG_Border.Thickness = 1
+        HexBG_Border.Position = cpAnchor + Vector2.new(10, 192); HexBG_Border.Size = Vector2.new(150, 20); HexBG_Border.Corner = 6
 
-        local CopyText = newText()
-        CopyText.Visible = false; CopyText.Transparency = 1; CopyText.ZIndex = 555
-        CopyText.Color = Color3.fromHex("#FFFFFF"); CopyText.Position = cpAnchor + Vector2.new(35, 194)
-        CopyText.Text = "Copy"; CopyText.Size = 14; CopyText.Center = false
-        CopyText.Outline = true; CopyText.Font = Drawing.Fonts.Monospace
+        local HexText = newText()
+        HexText.Visible = false; HexText.Transparency = 1; HexText.ZIndex = 555
+        HexText.Color = Color3.fromHex("#FFFFFF"); HexText.Position = cpAnchor + Vector2.new(15, 194)
+        HexText.Text = "#000000"; HexText.Size = 14; HexText.Center = false
+        HexText.Outline = true; HexText.Font = Drawing.Fonts.Monospace
 
-        local PasteBtn = Drawing.new("Square")
-        PasteBtn.Visible = false; PasteBtn.Transparency = 1; PasteBtn.ZIndex = 550
-        PasteBtn.Color = Color3.fromHex("#0a0a0a"); PasteBtn.Position = cpAnchor + Vector2.new(86, 192)
-        PasteBtn.Size = Vector2.new(74, 20); PasteBtn.Filled = true; PasteBtn.Corner = 6
-
-        local PasteBtn_Border = Drawing.new("Square")
-        PasteBtn_Border.Visible = false; PasteBtn_Border.Transparency = 1; PasteBtn_Border.ZIndex = 551
-        PasteBtn_Border.Color = Color3.fromHex("#282828"); PasteBtn_Border.Filled = false; PasteBtn_Border.Thickness = 1
-        PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Size = Vector2.new(74, 20); PasteBtn_Border.Corner = 6
-
-        local PasteText = newText()
-        PasteText.Visible = false; PasteText.Transparency = 1; PasteText.ZIndex = 555
-        PasteText.Color = Color3.fromHex("#FFFFFF"); PasteText.Position = cpAnchor + Vector2.new(108, 194)
-        PasteText.Text = "Paste"; PasteText.Size = 14; PasteText.Center = false
-        PasteText.Outline = true; PasteText.Font = Drawing.Fonts.Monospace
-
-        local allCPElements = {CPBG, CPBG_Border, CPTitle, SVArea, SVArea_Border, SVSelector, HueSlider, BrightSlider, HueBG, HueBG_Border, BrightBG, BrightBG_Border, CopyBtn, CopyBtn_Border, CopyText, PasteBtn, PasteBtn_Border, PasteText}
+        local allCPElements = {CPBG, CPBG_Border, CPTitle, SVArea, SVArea_Border, SVSelector, HueSlider, BrightSlider, HueBG, HueBG_Border, BrightBG, BrightBG_Border, HexBG, HexBG_Border, HexText}
 
         local function updateCPPositions()
             cpAnchor = colorPreview.Position + Vector2.new(20, 0)
@@ -498,10 +484,17 @@ function Library:CreateWindow(opts)
             SVSelector.Position = cpAnchor + Vector2.new(10 + cpS * 140, 25 + (1 - cpV) * 100)
             HueSlider.Position = cpAnchor + Vector2.new(10 + (cpH / 360) * 145, 142)
             BrightSlider.Position = cpAnchor + Vector2.new(10 + cpV * 145, 168)
-            CopyBtn.Position = cpAnchor + Vector2.new(10, 192); CopyBtn_Border.Position = cpAnchor + Vector2.new(10, 192)
-            CopyText.Position = cpAnchor + Vector2.new(35, 194)
-            PasteBtn.Position = cpAnchor + Vector2.new(86, 192); PasteBtn_Border.Position = cpAnchor + Vector2.new(86, 192)
-            PasteText.Position = cpAnchor + Vector2.new(108, 194)
+            HexBG.Position = cpAnchor + Vector2.new(10, 192); HexBG_Border.Position = cpAnchor + Vector2.new(10, 192)
+            HexText.Position = cpAnchor + Vector2.new(15, 194)
+        end
+
+        local function refreshHexDisplay()
+            -- When focused, HexText shows what user is typing; otherwise current color.
+            if not cpData or not cpData.hexFocused then
+                local fr, fg, fb = hsvToRgb(cpH, cpS, cpV)
+                HexText.Text = string.format("#%02X%02X%02X",
+                    math.floor(fr*255+0.5), math.floor(fg*255+0.5), math.floor(fb*255+0.5))
+            end
         end
 
         local function updateCPColor(source)
@@ -522,25 +515,62 @@ function Library:CreateWindow(opts)
             local fr, fg, fb = hsvToRgb(cpH, cpS, cpV)
             colorPreview.Color = Color3.new(fr, fg, fb)
             colorCallback(Color3.new(fr, fg, fb))
+            refreshHexDisplay()
         end
 
         local cpData = {
             cpOpen = false, cpDrag = nil, cpH = cpH, cpS = cpS, cpV = cpV,
             colorPreview = colorPreview, cpBorder = cpBorder,
             SVArea = SVArea, hueSegments = hueSegments, brightSegments = brightSegments,
-            CPBG = CPBG, CopyBtn = CopyBtn, PasteBtn = PasteBtn,
+            CPBG = CPBG, HexBG = HexBG, HexBG_Border = HexBG_Border, HexText = HexText,
+            hexFocused = false, hexBuffer = "",
             updatePositions = updateCPPositions, updateColor = updateCPColor,
+            refreshHex = refreshHexDisplay,
         }
 
         cpData.setHSV = function(h, s, v)
             cpH = h; cpS = s; cpV = v
             cpData.cpH = h; cpData.cpS = s; cpData.cpV = v
-            local fr, fg, fb = hsvToRgb(h, s, v)
-            colorPreview.Color = Color3.new(fr, fg, fb)
+            -- Full visual refresh: SVArea hue gradient, brightness gradient,
+            -- SV/hue/brightness selector positions, color preview, callback, hex text.
+            updateCPColor()
+        end
+
+        cpData.commitHex = function(applyOnly)
+            -- Parse cpData.hexBuffer (3 or 6 hex digits, with/without #) and apply.
+            -- If applyOnly is false (default), also exits focused mode.
+            local s = (cpData.hexBuffer or ""):gsub("^#", "")
+            local rr, gg, bb
+            if #s == 6 and s:match("^%x%x%x%x%x%x$") then
+                rr = tonumber(s:sub(1,2), 16) / 255
+                gg = tonumber(s:sub(3,4), 16) / 255
+                bb = tonumber(s:sub(5,6), 16) / 255
+            elseif #s == 3 and s:match("^%x%x%x$") then
+                rr = tonumber(s:sub(1,1):rep(2), 16) / 255
+                gg = tonumber(s:sub(2,2):rep(2), 16) / 255
+                bb = tonumber(s:sub(3,3):rep(2), 16) / 255
+            end
+            if rr then
+                local h, sa, va = rgbToHsv(rr, gg, bb)
+                cpData.setHSV(h, sa, va)
+                local fr, fg, fb = hsvToRgb(h, sa, va)
+                colorCallback(Color3.new(fr, fg, fb))
+            end
+            if not applyOnly then
+                cpData.hexFocused = false
+                cpData.hexBuffer = ""
+                HexBG_Border.Color = Color3.fromHex("#282828")
+                refreshHexDisplay()
+            end
         end
 
         cpData.toggle = function(show)
             cpData.cpOpen = show
+            if not show and cpData.hexFocused then
+                cpData.hexFocused = false
+                cpData.hexBuffer = ""
+                HexBG_Border.Color = Color3.fromHex("#282828")
+            end
             for _, el in ipairs(allCPElements) do el.Visible = show end
             for i = 1, 50 do whiteStrips[i].Visible = show end
             for i = 1, 55 do blackStrips[i].Visible = show end
@@ -567,17 +597,23 @@ function Library:CreateWindow(opts)
                     cpData.cpDrag = "bright"
                     cpV = math.clamp((mPos.X - brightSegments[1].Position.X) / 150, 0, 1)
                     cpData.cpV = cpV; cpH = cpData.cpH; cpS = cpData.cpS; updateCPColor("bright"); return true
-                elseif isInside(mPos, CopyBtn.Position, CopyBtn.Size) then
-                    local rr, gg, bb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
-                    local hex = string.format("#%02X%02X%02X", math.floor(rr*255+0.5), math.floor(gg*255+0.5), math.floor(bb*255+0.5))
-                    pcall(function() setclipboard(hex) end)
-                    return true
-                elseif isInside(mPos, PasteBtn.Position, PasteBtn.Size) then
-                    pcall(function() end)
+                elseif isInside(mPos, HexBG.Position, HexBG.Size) then
+                    -- Focus hex bar; pre-fill buffer with current color so user can
+                    -- edit relative to it instead of starting blank.
+                    if not cpData.hexFocused then
+                        cpData.hexFocused = true
+                        local fr, fg, fb = hsvToRgb(cpData.cpH, cpData.cpS, cpData.cpV)
+                        cpData.hexBuffer = string.format("#%02X%02X%02X",
+                            math.floor(fr*255+0.5), math.floor(fg*255+0.5), math.floor(fb*255+0.5))
+                        HexBG_Border.Color = Color3.fromHex("#FFFFFF")
+                        HexText.Text = cpData.hexBuffer .. "_"
+                    end
                     return true
                 elseif isInside(mPos, CPBG.Position, CPBG.Size) then
+                    if cpData.hexFocused then cpData.commitHex(false) end
                     return true
                 else
+                    if cpData.hexFocused then cpData.commitHex(false) end
                     toggleCP(cpData, false)
                 end
             end
@@ -2243,6 +2279,54 @@ function Library:CreateWindow(opts)
                             break
                         end
                     end
+                end
+            end
+
+            -- Colorpicker hex input (only one CP can be focused at a time)
+            for _, cp in ipairs(allColorpickers) do
+                if cp.hexFocused then
+                    local lk = cp._hexKeys or {}
+                    cp._hexKeys = lk
+                    local function appendChar(c)
+                        if #cp.hexBuffer < 7 then  -- "#" + 6 hex
+                            cp.hexBuffer = cp.hexBuffer .. c
+                            cp.commitHex(true)  -- live update if currently valid
+                            cp.HexText.Text = cp.hexBuffer .. "_"
+                        end
+                    end
+                    -- 0-9
+                    for code = 48, 57 do
+                        local d = iskeypressed(code)
+                        if d and not lk[code] then appendChar(string.char(code)) end
+                        lk[code] = d
+                    end
+                    -- A-F
+                    for code = 65, 70 do
+                        local d = iskeypressed(code)
+                        if d and not lk[code] then appendChar(string.char(code)) end
+                        lk[code] = d
+                    end
+                    -- Backspace
+                    local bs = iskeypressed(8)
+                    if bs and not lk[8] and #cp.hexBuffer > 0 then
+                        cp.hexBuffer = cp.hexBuffer:sub(1, -2)
+                        cp.commitHex(true)
+                        cp.HexText.Text = cp.hexBuffer .. "_"
+                    end
+                    lk[8] = bs
+                    -- Enter
+                    local en = iskeypressed(13)
+                    if en and not lk[13] then cp.commitHex(false) end
+                    lk[13] = en
+                    -- Escape: cancel without applying buffer's intermediate state
+                    local esc = iskeypressed(27)
+                    if esc and not lk[27] then
+                        cp.hexFocused = false
+                        cp.hexBuffer = ""
+                        cp.refreshHex()
+                    end
+                    lk[27] = esc
+                    break  -- only one focused at a time
                 end
             end
 
